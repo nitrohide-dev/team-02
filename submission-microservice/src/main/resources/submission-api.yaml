@@ -1,0 +1,364 @@
+openapi: 3.0.0
+info:
+  title: EasyConf Conference Management System
+  description: API for Paper Submission Microservice
+  version: 1.0.0
+
+servers:
+  - url: https://api.example.com/v1
+
+tags:
+  - name: submission
+    description: Everything about your submissions
+  - name: statistics
+    description: Statistics
+
+paths:
+  /submission:
+    get:
+      security:
+        - api_key: [ ]
+      summary: Get all submissions, optionally filtered.
+      description: |
+        Filters are combined in an AND-like fashion, for example:
+          `GET /submission?track=123&status=open`
+        will fetch all submissions on track 123 that have the status `open`
+      tags:
+        - submission
+      parameters:
+        - name: track
+          description: Filter by track id
+          schema:
+            type: integer
+            format: int64
+          in: query
+        - name: author
+          description: Filter by author id
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+          in: query
+        - name: keywords
+          description: Filters by keywords
+          schema:
+            type: array
+            items:
+              type: string
+          in: query
+        - name: status
+          description: Filter by status
+          schema:
+            $ref: '#/components/schemas/SubmissionStatus'
+          in: query
+        - name: name
+          description: Filter by submission name
+          schema:
+            type: string
+          in: query
+      responses:
+        '200':
+          description: Search successfull
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Submission'
+
+    post:
+      security:
+        - api_key: [ ]
+      tags:
+        - submission
+      summary: Add a new submission to the system
+      description: Add a new submission to the system
+      operationId: addSubmission
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Submission'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Submission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Submission'
+        required: true
+      responses:
+        '201':
+          description: Successfully created
+          headers:
+            Location:
+              description: The URL of the created submission
+              schema:
+                type: string
+                format: url
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '400':
+          description: Badly formatted input
+        '403':
+          description: Deadline passed
+
+  /submission/{submissionId}:
+    get:
+      security:
+        - api_key: [ ]
+      tags:
+        - submission
+      summary: Find submission by ID
+      description: Returns a single submission
+      operationId: getSubmissionById
+      parameters:
+        - name: submissionId
+          in: path
+          description: ID of submission to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Submission not found
+
+    put:
+      security:
+        - api_key: [ ]
+      tags:
+        - submission
+      summary: Partially update a submission in the system
+      parameters:
+        - name: submissionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          in: path
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Submission'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/Submission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Submission'
+        required: true
+      responses:
+        '200':
+          description: Successfully updated submission
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Submission'
+            application/x-www-form-urlencoded:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '404':
+          description: Submission id not found
+        '400':
+          description: Badly formatted request
+        '403':
+          description: Deadline passed
+
+
+    delete:
+      security:
+        - api_key: [ ]
+      tags:
+        - submission
+      summary: Deletes a submission
+      description: delete a submission
+      operationId: deleteSubmission
+      parameters:
+        - name: submissionId
+          in: path
+          description: Submission id to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deletion successfull
+        '400':
+          description: Submission not found
+  /stats:
+    get:
+      description: Get global statistics
+      responses:
+        '200':
+          description: Statistics OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Statistics"
+      security:
+        - api_key: [ ]
+      tags:
+        - statistics
+  /stats/event/{eventId}:
+    get:
+      description: Get statistics of this event
+      security:
+        - api_key: [ ]
+      tags:
+        - statistics
+      parameters:
+        - name: eventId
+          required: true
+          in: path
+          description: The event to get statistics for
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Statistics OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Statistics"
+  /stats/track/{trackId}:
+    get:
+      description: Get statistics of this track
+      security:
+        - api_key: [ ]
+      tags:
+        - statistics
+      parameters:
+        - name: trackId
+          required: true
+          in: path
+          description: The track to get statistics for
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Statistics OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Statistics"
+
+components:
+  schemas:
+    SubmissionStatus:
+      type: string
+      description: Submission Status
+      example: accepted
+      enum:
+        - accepted
+        - rejected
+        - underReview
+        - withdrawn
+        - open
+    Submission:
+      x-class-extra-annotation: "@javax.persistence.Entity"
+      type: object
+      properties:
+        updated:
+          type: string
+          format: date-time
+        created:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+          uniqueItems: true
+          x-field-extra-annotation: "@javax.persistence.Id"
+
+        status:
+          $ref: "#/components/schemas/SubmissionStatus"
+        submittedBy:
+          type: integer
+          format: int64
+          description: The ID of the author that submitted this paper
+        title:
+          type: string
+          example: "Paper title"
+        authors:
+          type: array
+          x-field-extra-annotation: "@javax.persistence.ElementCollection(targetClass=Long.class)"
+          items:
+            type: integer
+            format: int64
+        abstract:
+          type: string
+          maxLength: 2000
+        keywords:
+          type: array
+          x-field-extra-annotation: "@javax.persistence.ElementCollection(targetClass=String.class)"
+          items:
+            type: string
+        link:
+          type: string
+          example: "https://github.com/"
+        type:
+          type: string
+          description: Type of Submission
+          example: full
+          enum:
+            - full
+            - short
+            - position
+        trackId:
+          type: integer
+          format: int64
+          example: 10
+      required: [ id, submittedBy, title, created, updated ]
+      xml:
+        name: submission
+    Statistics:
+      type: object
+      properties:
+        totalSubmissions:
+          type: integer
+          format: int64
+        open:
+          type: integer
+          format: int64
+        accepted:
+          type: integer
+          format: int64
+        rejected:
+          type: integer
+          format: int64
+        underReview:
+          type: integer
+          format: int64
+        withdrawn:
+          type: integer
+          format: int64
+
+  securitySchemes:
+    api_key:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
