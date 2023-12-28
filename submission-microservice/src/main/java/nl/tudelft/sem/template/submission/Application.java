@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  * Example microservice application.
  */
 @EntityScan("nl.tudelft.sem.template.model")
-@ComponentScan
 @EnableJpaRepositories("nl.tudelft.sem.template.submission.repositories")
 @SpringBootApplication
 public class Application {
