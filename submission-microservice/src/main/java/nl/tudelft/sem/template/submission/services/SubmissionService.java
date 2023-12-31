@@ -40,7 +40,7 @@ public class SubmissionService {
      * @return response with created submission if success, otherwise error
      */
     public ResponseEntity<Submission> add(Submission submission) {
-        if(!trackService.checkDeadline(submission.getTrackId())) {
+        if (!trackService.checkDeadline(submission.getTrackId())) {
             return ResponseEntity.badRequest().build();
         }
         submission.setId(randomUUID());

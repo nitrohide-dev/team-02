@@ -29,7 +29,7 @@ public class TrackService {
      * @return boolean which is true if the track deadline has not been passed yet
      */
     public boolean checkDeadline(Long trackId) {
-        String url = "http://ip_adress:8082/microservice/api/data";
+        String url = "http://ip_adress:8082/microservice/api/?value=" + trackId;
 
         String trackTime = httpRequestService.get(url).body();
 
