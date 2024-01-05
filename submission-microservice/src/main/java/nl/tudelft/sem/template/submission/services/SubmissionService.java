@@ -2,11 +2,14 @@ package nl.tudelft.sem.template.submission.services;
 
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
+import nl.tudelft.sem.template.submission.services.TrackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import javax.sound.midi.Track;
+import javax.validation.constraints.Null;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,14 +20,17 @@ import static java.util.UUID.randomUUID;
 public class SubmissionService {
     private final SubmissionRepository submissionRepository;
 
+    private final TrackService trackService;
+
     /**
      * Submission Service constructor.
      *
      * @param submissionRepository submission repository
      */
     @Autowired
-    public SubmissionService(SubmissionRepository submissionRepository) {
+    public SubmissionService(SubmissionRepository submissionRepository, TrackService trackService) {
         this.submissionRepository = submissionRepository;
+        this.trackService = trackService;
     }
 
     /**
@@ -34,6 +40,9 @@ public class SubmissionService {
      * @return response with created submission if success, otherwise error
      */
     public ResponseEntity<Submission> add(Submission submission) {
+        if (!trackService.checkDeadline(submission.getTrackId())) {
+            return ResponseEntity.badRequest().build();
+        }
         submission.setId(randomUUID());
         submission.setCreated(OffsetDateTime.now());
         submission.setUpdated(submission.getCreated());
