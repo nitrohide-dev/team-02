@@ -1,11 +1,12 @@
 package nl.tudelft.sem.template.submission.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import nl.tudelft.sem.template.model.Track;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 @Service
 public class TrackService {
@@ -28,12 +29,20 @@ public class TrackService {
      * @param trackId the id of the track that we should check the deadline of
      * @return boolean which is true if the track deadline has not been passed yet
      */
-    public boolean checkDeadline(Long trackId) {
-        String url = "http://ip_adress:8082/microservice/api/?value=" + trackId;
+    public boolean checkSubmissionDeadline(Long trackId) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        String url = "http://ip_adress:8082/track/" + trackId;
 
-        String trackTime = httpRequestService.get(url).body();
+        String receivedJson = httpRequestService.get(url).body();
+        Track track;
+        try {
+            track = objectMapper.readValue(receivedJson, Track.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
-        return (OffsetDateTime.now().equals(OffsetDateTime.now()));
+        return (LocalDateTime.parse(track.getSubmitDeadline()).isAfter(LocalDateTime.now()));
     }
+
 }
 
