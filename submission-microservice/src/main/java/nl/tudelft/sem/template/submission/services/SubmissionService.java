@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import javax.sound.midi.Track;
 import javax.validation.constraints.Null;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,11 +41,11 @@ public class SubmissionService {
      * @return response with created submission if success, otherwise error
      */
     public ResponseEntity<Submission> add(Submission submission) {
-        if (!trackService.checkDeadline(submission.getTrackId())) {
+        if (!trackService.checkSubmissionDeadline(submission.getTrackId())) {
             return ResponseEntity.badRequest().build();
         }
         submission.setId(randomUUID());
-        submission.setCreated(OffsetDateTime.now());
+        submission.setCreated(LocalDateTime.now());
         submission.setUpdated(submission.getCreated());
         return ResponseEntity.ok(submissionRepository.save(submission));
     }
@@ -82,7 +83,7 @@ public class SubmissionService {
             submission.setType(updatedSubmission.getType());
             submission.setTrackId(updatedSubmission.getTrackId());
             submission.setLink(updatedSubmission.getLink());
-            submission.setUpdated(OffsetDateTime.now());
+            submission.setUpdated(LocalDateTime.now());
 
             return ResponseEntity.ok(submissionRepository.save(submission));
 

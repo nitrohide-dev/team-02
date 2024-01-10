@@ -186,6 +186,7 @@ openApiGenerate {
     ])
     // Exclude controller generation
     configOptions = [
+		dateLibrary: 'java8-localdatetime',  // Use LocalDateTime instead of OffsetDateTime
         interfaceOnly: 'true'
     ]
 }
