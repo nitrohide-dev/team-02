@@ -26,6 +26,12 @@ paths:
       tags:
         - submission
       parameters:
+        - name: event
+          description: Filter by event id
+          schema:
+            type: integer
+            format: int64
+          in: query
         - name: track
           description: Filter by track id
           schema:
@@ -65,7 +71,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Submission'
+                  $ref: '#/components/schemas/ReturnedSubmission'
 
     post:
       security:
@@ -99,10 +105,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Submission'
+                $ref: '#/components/schemas/ReturnedSubmission'
             application/xml:
               schema:
-                $ref: '#/components/schemas/Submission'
+                $ref: '#/components/schemas/ReturnedSubmission'
         '400':
           description: Badly formatted input
         '403':
@@ -131,10 +137,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Submission'
+                $ref: '#/components/schemas/ReturnedSubmission'
             application/xml:
               schema:
-                $ref: '#/components/schemas/Submission'
+                $ref: '#/components/schemas/ReturnedSubmission'
         '400':
           description: Invalid ID supplied
         '404':
@@ -157,13 +163,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Submission'
+              $ref: '#/components/schemas/UpdateSubmission'
           application/xml:
             schema:
-              $ref: '#/components/schemas/Submission'
+              $ref: '#/components/schemas/UpdateSubmission'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Submission'
+              $ref: '#/components/schemas/UpdateSubmission'
         required: true
       responses:
         '200':
@@ -171,13 +177,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Submission'
+                $ref: '#/components/schemas/ReturnedSubmission'
             application/xml:
               schema:
-                $ref: '#/components/schemas/Submission'
+                $ref: '#/components/schemas/ReturnedSubmission'
             application/x-www-form-urlencoded:
               schema:
-                $ref: '#/components/schemas/Submission'
+                $ref: '#/components/schemas/ReturnedSubmission'
         '404':
           description: Submission id not found
         '400':
@@ -204,7 +210,7 @@ paths:
             format: uuid
       responses:
         '204':
-          description: Deletion successfull
+          description: Deletion successful
         '400':
           description: Submission not found
   /stats:
@@ -230,9 +236,9 @@ paths:
         - statistics
       parameters:
         - name: eventId
-          required: true
           in: path
           description: The event to get statistics for
+          required: true
           schema:
             type: integer
             format: int64
@@ -252,9 +258,9 @@ paths:
         - statistics
       parameters:
         - name: trackId
-          required: true
           in: path
           description: The track to get statistics for
+          required: true
           schema:
             type: integer
             format: int64
@@ -278,30 +284,9 @@ components:
         - underReview
         - withdrawn
         - open
-    Submission:
-      x-class-extra-annotation: "@javax.persistence.Entity"
+    UpdateSubmission:
       type: object
       properties:
-        updated:
-          example: "2022-12-31T12:30:00"
-          type: string
-          format: date-time
-        created:
-          example: "2022-12-31T12:30:00"
-          type: string
-          format: date-time
-        id:
-          type: string
-          format: uuid
-          uniqueItems: true
-          x-field-extra-annotation: "@javax.persistence.Id"
-
-        status:
-          $ref: "#/components/schemas/SubmissionStatus"
-        submittedBy:
-          type: integer
-          format: int64
-          description: The ID of the author that submitted this paper
         title:
           type: string
           example: "Paper title"
@@ -319,18 +304,56 @@ components:
           x-field-extra-annotation: "@javax.persistence.ElementCollection(targetClass=String.class)"
           items:
             type: string
+        file:
+          type: string
         link:
           type: string
           example: "https://github.com/"
         type:
           $ref: '#/components/schemas/PaperType'
+        eventId:
+          type: integer
+          format: int64
+          example: 10
         trackId:
           type: integer
           format: int64
           example: 10
-      required: [ id, submittedBy, title, created, updated ]
+
       xml:
         name: submission
+    Submission:
+      type: object
+      allOf:
+        - { $ref: "#/components/schemas/UpdateSubmission" }
+        - properties:
+            submittedBy:
+              type: integer
+              format: int64
+              description: The ID of the author that submitted this paper
+      required: [title, authors, abstract, file, updated, type, trackId, eventId, submittedBy]
+    ReturnedSubmission:
+      x-class-extra-annotation: "@javax.persistence.Entity"
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Submission"
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "550e8400-e29b-41d4-a716-446655440000"
+              uniqueItems: true
+              x-field-extra-annotation: "@javax.persistence.Id"
+            updated:
+              type: string
+              format: date-time
+            created:
+              type: string
+              format: date-time
+            status:
+              $ref: "#/components/schemas/SubmissionStatus"
+          required: [id, created, updated]
     Statistics:
       type: object
       properties:
