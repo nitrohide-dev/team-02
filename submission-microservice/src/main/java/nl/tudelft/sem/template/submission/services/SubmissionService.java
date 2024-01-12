@@ -1,10 +1,8 @@
 package nl.tudelft.sem.template.submission.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
+import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +18,8 @@ import java.util.UUID;
 @Service
 public class SubmissionService {
     private final SubmissionRepository submissionRepository;
-
+    private final StatisticsService statisticsService;
     private final TrackService trackService;
-
     private final HttpRequestService httpRequestService;
 
     /**
@@ -31,9 +28,12 @@ public class SubmissionService {
      * @param submissionRepository submission repository
      */
     @Autowired
-    public SubmissionService(SubmissionRepository submissionRepository, TrackService trackService,
+    public SubmissionService(SubmissionRepository submissionRepository,
+                             StatisticsService statisticsService,
+                             TrackService trackService,
                              HttpRequestService httpRequestService) {
         this.submissionRepository = submissionRepository;
+        this.statisticsService = statisticsService;
         this.trackService = trackService;
         this.httpRequestService = httpRequestService;
     }
@@ -61,7 +61,7 @@ public class SubmissionService {
         }
         authors.add(submission.getSubmittedBy());
         submission.setAuthors(authors);
-
+        statisticsService.updateStatistics(null, submission);
         return ResponseEntity.ok(submissionRepository.save(submission));
     }
 
@@ -76,7 +76,10 @@ public class SubmissionService {
         if (deleted.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        submissionRepository.delete(deleted.get());
+
+        Submission submission = deleted.get();
+        submissionRepository.delete(submission);
+        statisticsService.updateStatistics(submission, null);
         return ResponseEntity.ok().build();
     }
 
@@ -84,27 +87,31 @@ public class SubmissionService {
      * Updates submission with a provided id in database.
      *
      * @param submissionId      id of submission to update
-     * @param updatedSubmission updated subission
+     * @param updatedSubmission updated submission
      * @return response with updated submission if success, error otherwise
      */
     public ResponseEntity<Submission> update(@PathVariable("id") UUID submissionId,
                                              Submission updatedSubmission) {
-        return submissionRepository.findById(submissionId).map(submission -> {
-            submission.setStatus(updatedSubmission.getStatus());
-            submission.setTitle(updatedSubmission.getTitle());
-            submission.setAbstract(updatedSubmission.getAbstract());
-            submission.setAuthors(updatedSubmission.getAuthors());
-            submission.setKeywords(updatedSubmission.getKeywords());
-            submission.setType(updatedSubmission.getType());
-            submission.setEventId(updatedSubmission.getEventId());
-            submission.setTrackId(updatedSubmission.getTrackId());
-            submission.setLink(updatedSubmission.getLink());
-            submission.setUpdated(LocalDateTime.now());
+        Optional<Submission> optional = submissionRepository.findById(submissionId);
+        if (optional.isEmpty()) {
+            ResponseEntity.badRequest().build();
+        }
 
-            return ResponseEntity.ok(submissionRepository.save(submission));
+        Submission submission = optional.get();
 
-        }).orElseGet(() -> ResponseEntity.badRequest().build());
+        statisticsService.updateStatistics(submission, updatedSubmission);
+        submission.setStatus(updatedSubmission.getStatus());
+        submission.setTitle(updatedSubmission.getTitle());
+        submission.setAbstract(updatedSubmission.getAbstract());
+        submission.setAuthors(updatedSubmission.getAuthors());
+        submission.setKeywords(updatedSubmission.getKeywords());
+        submission.setType(updatedSubmission.getType());
+        submission.setEventId(updatedSubmission.getEventId());
+        submission.setTrackId(updatedSubmission.getTrackId());
+        submission.setLink(updatedSubmission.getLink());
+        submission.setUpdated(LocalDateTime.now());
 
+        return ResponseEntity.ok(submissionRepository.save(submission));
     }
 
     /**
@@ -116,19 +123,10 @@ public class SubmissionService {
      * @return boolean which returns ture if there are no identical submissions
      */
     public boolean checkDuplicateSubmissions(Submission submission) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        String url = "http://ip_adress:8084/submission?title=" + submission.getTitle()
+        String url = "submission?title=" + submission.getTitle()
                 + "?eventId=" + submission.getEventId();
 
-        String receivedJson = httpRequestService.get(url).body();
-        List<Submission> submissions;
-        try {
-            submissions = objectMapper.readValue(receivedJson, new TypeReference<>() {
-            });
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
+        List<Submission> submissions = httpRequestService.getList(url, Submission.class, RequestType.USER);
         return submissions.isEmpty();
     }
 }
