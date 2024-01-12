@@ -1,10 +1,7 @@
 package nl.tudelft.sem.template.submission.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.Track;
+import nl.tudelft.sem.template.submission.models.RequestType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -56,17 +53,9 @@ public class TrackService {
      * @return list of tracks that are associated with the eventId that was provided
      */
     public List<Track> getAllTracksByEventId(Long eventId) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        String url = "http://ip_adress:8084/track/?eventId=" + eventId;
+        String url = "track/?eventId=" + eventId;
 
-        String receivedJson = httpRequestService.get(url).body();
-        List<Track> track;
-        try {
-            track = objectMapper.readValue(receivedJson, new TypeReference<>() {});
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-        return track;
+        return httpRequestService.getList(url, Track.class, RequestType.USER);
     }
 
     /**
@@ -76,17 +65,9 @@ public class TrackService {
      * @return Track object which has all the data that was stored in the database
      */
     private Track getTrackUsingTrackId(Long trackId) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        String url = "http://ip_adress:8084/track/" + trackId;
+        String url = "track/" + trackId;
 
-        String receivedJson = httpRequestService.get(url).body();
-        Track track;
-        try {
-            track = objectMapper.readValue(receivedJson, Track.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-        return track;
+        return httpRequestService.get(url, Track.class, RequestType.USER);
     }
 
 }

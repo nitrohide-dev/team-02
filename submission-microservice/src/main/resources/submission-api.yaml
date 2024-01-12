@@ -222,12 +222,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Statistics"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Statistics"
       security:
         - api_key: [ ]
       tags:
         - statistics
-  /stats/event/{eventId}:
+  /stats/event/{eventId}/{userId}:
     get:
       description: Get statistics of this event
       security:
@@ -235,13 +237,8 @@ paths:
       tags:
         - statistics
       parameters:
-        - name: eventId
-          in: path
-          description: The event to get statistics for
-          required: true
-          schema:
-            type: integer
-            format: int64
+        - $ref: '#/components/parameters/EventId'
+        - $ref: '#/components/parameters/UserId'
       responses:
         '200':
           description: Statistics OK
@@ -249,7 +246,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Statistics"
-  /stats/track/{trackId}:
+  /stats/track/{trackId}/{userId}:
     get:
       description: Get statistics of this track
       security:
@@ -257,13 +254,8 @@ paths:
       tags:
         - statistics
       parameters:
-        - name: trackId
-          in: path
-          description: The track to get statistics for
-          required: true
-          schema:
-            type: integer
-            format: int64
+        - $ref: '#/components/parameters/TrackId'
+        - $ref: '#/components/parameters/UserId'
       responses:
         '200':
           description: Statistics OK
@@ -273,7 +265,40 @@ paths:
                 $ref: "#/components/schemas/Statistics"
 
 components:
+  parameters:
+    TrackId:
+      name: trackId
+      in: path
+      required: true
+      description: Id of the track
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      description: Id of the event
+      schema:
+        type: integer
+        format: int64
+      example: 1
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: Id of the user
+      schema:
+        type: integer
+        format: int64
+      example: 1
   schemas:
+    Role:
+      type: string
+      enum:
+        - general_chair
+        - pc_chair
     SubmissionStatus:
       type: string
       description: Submission Status
@@ -342,26 +367,49 @@ components:
         name: submission
 
     Statistics:
+      x-class-extra-annotation: "@javax.persistence.Entity"
       type: object
       properties:
+        id:
+          type: integer
+          format: int64
+          uniqueItems: true
+          x-field-extra-annotation: "@javax.persistence.Id"
         totalSubmissions:
           type: integer
           format: int64
+          default: 0
         open:
           type: integer
           format: int64
+          default: 0
         accepted:
           type: integer
           format: int64
+          default: 0
         rejected:
           type: integer
           format: int64
+          default: 0
         underReview:
           type: integer
           format: int64
+          default: 0
         withdrawn:
           type: integer
           format: int64
+          default: 0
+        averageNumberOfAuthors:
+          type: integer
+          format: int64
+          default: 0
+        keywordsStats:
+          type: map
+          x-field-extra-annotation: "@javax.persistence.ElementCollection(targetClass=Long.class)"
+          items:
+            type: integer
+            format: int64
+
     Track:
       type: object
       properties:
