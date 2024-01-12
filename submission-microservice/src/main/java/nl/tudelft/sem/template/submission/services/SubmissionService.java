@@ -1,7 +1,10 @@
 package nl.tudelft.sem.template.submission.services;
 
+import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
+import nl.tudelft.sem.template.submission.components.chain.AuthorizationValidator;
+import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,7 @@ public class SubmissionService {
     private final StatisticsService statisticsService;
     private final TrackService trackService;
     private final HttpRequestService httpRequestService;
+    private final SubmissionValidator submissionValidator;
 
     /**
      * Submission Service constructor.
@@ -31,11 +35,19 @@ public class SubmissionService {
     public SubmissionService(SubmissionRepository submissionRepository,
                              StatisticsService statisticsService,
                              TrackService trackService,
-                             HttpRequestService httpRequestService) {
+                             HttpRequestService httpRequestService,
+                             SubmissionValidator submissionValidator) {
         this.submissionRepository = submissionRepository;
         this.statisticsService = statisticsService;
         this.trackService = trackService;
         this.httpRequestService = httpRequestService;
+        this.submissionValidator = submissionValidator;
+    }
+
+    private void runChain(UUID submissionId, long userId) throws IllegalAccessException, NotFoundException {
+        submissionValidator.setNext(new AuthorizationValidator(submissionRepository));
+        // submissionValidator.setNext(new DeadlineValidator(submissionRepository));
+        submissionValidator.handle(submissionId, userId);
     }
 
     /**
@@ -49,13 +61,13 @@ public class SubmissionService {
         //if (!trackService.checkSubmissionDeadline(submission.getTrackId()))
         //return ResponseEntity.badRequest().build();
         //}
-        if (!trackService.requiredFields(submission.getTitle(),
-                submission.getAuthors(),
-                submission.getAbstract(),
-                submission.getKeywords(),
-                submission.getLink())) {
-            return ResponseEntity.badRequest().build();
-        }
+        //        if (!trackService.requiredFields(submission.getTitle(),
+        //                submission.getAuthors(),
+        //                submission.getAbstract(),
+        //                submission.getKeywords(),
+        //                submission.getLink())) {
+        //            return ResponseEntity.badRequest().build();
+        //        }
         submission.setId(UUID.randomUUID());
         submission.setCreated(LocalDateTime.now());
         submission.setUpdated(submission.getCreated());
@@ -78,7 +90,10 @@ public class SubmissionService {
      * @param submissionId id of submission to delete
      * @return response ok if submission is deleted, error otherwise
      */
-    public ResponseEntity<Void> delete(@PathVariable("id") UUID submissionId) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID submissionId,
+                                       @PathVariable("userId") long userId) throws NotFoundException,
+            IllegalAccessException {
+        runChain(submissionId, userId);
         Optional<Submission> deleted = submissionRepository.findById(submissionId);
         if (deleted.isEmpty()) {
             return ResponseEntity.badRequest().build();
@@ -98,7 +113,10 @@ public class SubmissionService {
      * @return response with updated submission if success, error otherwise
      */
     public ResponseEntity<Submission> update(@PathVariable("id") UUID submissionId,
-                                             Submission updatedSubmission) {
+                                             @PathVariable("userId") long userId,
+                                             Submission updatedSubmission) throws NotFoundException,
+            IllegalAccessException {
+        runChain(submissionId, userId);
         Optional<Submission> optional = submissionRepository.findById(submissionId);
         if (optional.isEmpty()) {
             ResponseEntity.badRequest().build();
@@ -124,7 +142,7 @@ public class SubmissionService {
     /**
      * This method will be used to check whether there are any submissions
      * that are identical to the one that the user is trying to submit.
-     * To check for whether it is ideantical or not, we are just going to check for the title of the submission.
+     * To check for whether it is identical or not, we are just going to check for the title of the submission.
      *
      * @param submission a submission that we are trying to add
      * @return boolean which returns ture if there are no identical submissions
