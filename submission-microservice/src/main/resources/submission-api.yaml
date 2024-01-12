@@ -83,15 +83,26 @@ paths:
       operationId: addSubmission
       requestBody:
         content:
-          application/json:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/Submission'
+#          application/xml:
+#            schema:
+#              $ref: '#/components/schemas/Submission'
+#          application/x-www-form-urlencoded:
+#            schema:
+#              $ref: '#/components/schemas/Submission'
+          multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Submission'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/Submission'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Submission'
+              type: object
+              properties:
+                submissionData:
+                  type: string
+                  description: "Stringified JSON of submission data"
+                file:
+                  type: string
+                  format: binary
+                  description: "Text file to upload"
         required: true
       responses:
         '201':
@@ -374,6 +385,9 @@ components:
         link:
           type: string
           example: "https://github.com/"
+        textFilePath:
+          type: string
+          example: "path/to/file"
         type:
           $ref: '#/components/schemas/PaperType'
         trackId:

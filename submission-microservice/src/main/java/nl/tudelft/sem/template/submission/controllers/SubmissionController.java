@@ -1,5 +1,6 @@
 package nl.tudelft.sem.template.submission.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.api.SubmissionApi;
 import nl.tudelft.sem.template.model.Submission;
@@ -7,9 +8,17 @@ import nl.tudelft.sem.template.model.SubmissionStatus;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +26,7 @@ import java.util.UUID;
 
 @RestController
 public class SubmissionController implements SubmissionApi {
+    private final ObjectMapper objectMapper;
     private final SubmissionService submissionService;
     private final SubmissionRepository submissionRepository;
 
@@ -28,22 +38,67 @@ public class SubmissionController implements SubmissionApi {
      */
     @Autowired
     public SubmissionController(SubmissionService submissionService,
-                                SubmissionRepository submissionRepository) {
+                                SubmissionRepository submissionRepository,
+                                ObjectMapper objectMapper) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
+        this.objectMapper = obje//        if (!trackService.requiredFields(submission.getTitle(),
+//                submission.getAuthors(),
+//                submission.getAbstract(),
+//                submission.getKeywords(),
+//                submission.getLink())) {
+//            return ResponseEntity.badRequest().build();
+//        }ctMapper;
     }
 
     /**
      * New submission.
      *
-     * @param submission (required)
-     * @return response with created submission if success, otherwise error
+     * @param submissionData data of the submission (required)
+     * @param file the file to upload (required)
+     * @return add a submission or return error status code if it fails
      */
     @Override
-    public ResponseEntity<Submission> addSubmission(Submission submission) {
-        return submissionService.add(submission);
+    public ResponseEntity<Submission> addSubmission(@RequestParam("submissionData") String submissionData,
+                                                    @RequestParam("file") MultipartFile file) {
+        try {
+            Submission submission = objectMapper.readValue(submissionData, Submission.class);
+            if (!file.isEmpty() && file.getContentType().equals("text/plain")) {
+                String filePath = saveFile(file);
+                submission.setTextFilePath(filePath);
+            } else {
+                return ResponseEntity.badRequest().body(null);
+            }
+            return submissionService.add(submission);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
+    /**
+     * Saves the uploaded file.
+     *
+     * @param file the file that is being uploaded
+     * @return the String of a directory of the text file
+     */
+    private String saveFile(MultipartFile file) {
+        try {
+            String directoryPath = "../../";
+
+            String originalFilename = file.getOriginalFilename();
+            String newFileName = UUID.randomUUID().toString() + "-" + originalFilename;
+            String filePath = directoryPath + File.separator + newFileName;
+
+            Path path = Paths.get(filePath);
+            Files.copy(file.getInputStream(), path);
+
+            return filePath;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     /**
      * Delete submission with a given id.

@@ -61,6 +61,13 @@ public class SubmissionService {
         //if (!trackService.checkSubmissionDeadline(submission.getTrackId()))
         //return ResponseEntity.badRequest().build();
         //}
+        if (!trackService.requiredFields(submission.getTitle(),
+                submission.getAuthors(),
+                submission.getAbstract(),
+                submission.getKeywords(),
+                submission.getLink())) {
+            return ResponseEntity.badRequest().build();
+        }
         submission.setId(UUID.randomUUID());
         submission.setCreated(LocalDateTime.now());
         submission.setUpdated(submission.getCreated());
