@@ -1,4 +1,4 @@
-package nl.tudelft.sem.template.submission.components;
+package nl.tudelft.sem.template.submission.components.chain;
 
 import javassist.NotFoundException;
 import org.springframework.stereotype.Component;

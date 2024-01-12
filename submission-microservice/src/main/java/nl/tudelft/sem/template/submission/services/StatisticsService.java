@@ -2,9 +2,9 @@ package nl.tudelft.sem.template.submission.services;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.*;
-import nl.tudelft.sem.template.submission.components.EventStrategy;
-import nl.tudelft.sem.template.submission.components.StatisticsStrategy;
-import nl.tudelft.sem.template.submission.components.TrackStrategy;
+import nl.tudelft.sem.template.submission.components.strategy.EventStrategy;
+import nl.tudelft.sem.template.submission.components.strategy.StatisticsStrategy;
+import nl.tudelft.sem.template.submission.components.strategy.TrackStrategy;
 import nl.tudelft.sem.template.submission.models.Chair;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
