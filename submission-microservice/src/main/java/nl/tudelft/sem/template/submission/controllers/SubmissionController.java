@@ -26,7 +26,6 @@ import java.util.UUID;
 
 @RestController
 public class SubmissionController implements SubmissionApi {
-    private final ObjectMapper objectMapper;
     private final SubmissionService submissionService;
     private final SubmissionRepository submissionRepository;
 
@@ -38,29 +37,22 @@ public class SubmissionController implements SubmissionApi {
      */
     @Autowired
     public SubmissionController(SubmissionService submissionService,
-                                SubmissionRepository submissionRepository,
-                                ObjectMapper objectMapper) {
+                                SubmissionRepository submissionRepository) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
-        this.objectMapper = obje//        if (!trackService.requiredFields(submission.getTitle(),
-//                submission.getAuthors(),
-//                submission.getAbstract(),
-//                submission.getKeywords(),
-//                submission.getLink())) {
-//            return ResponseEntity.badRequest().build();
-//        }ctMapper;
     }
 
     /**
      * New submission.
      *
      * @param submissionData data of the submission (required)
-     * @param file the file to upload (required)
+     * @param file           the file to upload (required)
      * @return add a submission or return error status code if it fails
      */
     @Override
     public ResponseEntity<Submission> addSubmission(@RequestParam("submissionData") String submissionData,
                                                     @RequestParam("file") MultipartFile file) {
+        ObjectMapper objectMapper = new ObjectMapper();
         try {
             Submission submission = objectMapper.readValue(submissionData, Submission.class);
             if (!file.isEmpty() && file.getContentType().equals("text/plain")) {
