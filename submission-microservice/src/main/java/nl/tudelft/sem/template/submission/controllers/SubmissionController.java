@@ -1,5 +1,6 @@
 package nl.tudelft.sem.template.submission.controllers;
 
+import javassist.NotFoundException;
 import nl.tudelft.sem.template.api.SubmissionApi;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
@@ -43,6 +44,7 @@ public class SubmissionController implements SubmissionApi {
         return submissionService.add(submission);
     }
 
+
     /**
      * Delete submission with a given id.
      *
@@ -50,8 +52,14 @@ public class SubmissionController implements SubmissionApi {
      * @return response ok if submission is deleted, error otherwise
      */
     @Override
-    public ResponseEntity<Void> deleteSubmission(UUID submissionId) {
-        return submissionService.delete(submissionId);
+    public ResponseEntity<Void> deleteSubmission(UUID submissionId, Long userId) {
+        try {
+            return submissionService.delete(submissionId, userId);
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(401).build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(404).build();
+        }
     }
 
     /**
@@ -90,8 +98,15 @@ public class SubmissionController implements SubmissionApi {
      * @return response with updated submission if success, error otherwise
      */
     @Override
-    public ResponseEntity<Submission> submissionSubmissionIdPut(UUID submissionId,
-                                                                Submission updateSubmission) {
-        return submissionService.update(submissionId, updateSubmission);
+    public ResponseEntity<Submission> submissionSubmissionIdUserIdPut(UUID submissionId,
+                                                                      Long userId,
+                                                                      Submission updateSubmission) {
+        try {
+            return submissionService.update(submissionId, userId, updateSubmission);
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(401).build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(404).build();
+        }
     }
 }

@@ -2,12 +2,12 @@ package nl.tudelft.sem.template.submission.services;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.*;
+import nl.tudelft.sem.template.submission.components.EventStrategy;
+import nl.tudelft.sem.template.submission.components.StatisticsStrategy;
+import nl.tudelft.sem.template.submission.components.TrackStrategy;
 import nl.tudelft.sem.template.submission.models.Chair;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
-import nl.tudelft.sem.template.submission.strategies.EventStrategy;
-import nl.tudelft.sem.template.submission.strategies.StatisticsStrategy;
-import nl.tudelft.sem.template.submission.strategies.TrackStrategy;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -102,7 +102,7 @@ public class StatisticsService {
 
         if (oldSubmission == null) {
             trackStats = new Statistics();
-            trackStats.setId(generateId());
+            trackStats.setId(newSubmission.getTrackId());
             trackStats.setTotalSubmissions(0L);
 
             addSubmission(trackStats, newSubmission);
@@ -113,7 +113,13 @@ public class StatisticsService {
             deleteSubmission(trackStats, oldSubmission);
 
             if (newSubmission != null) {
-                long newTrackId = newSubmission.getTrackId();
+                long newTrackId;
+                if (newSubmission.getTrackId() == null) {
+                    newTrackId = oldTrackId;
+                } else {
+                    newTrackId = newSubmission.getTrackId();
+                }
+
                 Optional<Statistics> newOptional = statisticsRepository.findById(newTrackId);
                 Statistics newTrackStats = newOptional.get();
                 addSubmission(newTrackStats, newSubmission);

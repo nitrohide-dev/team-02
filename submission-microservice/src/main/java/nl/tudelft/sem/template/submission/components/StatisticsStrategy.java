@@ -1,4 +1,4 @@
-package nl.tudelft.sem.template.submission.strategies;
+package nl.tudelft.sem.template.submission.components;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Statistics;
