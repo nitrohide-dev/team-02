@@ -43,8 +43,6 @@ public class HttpRequestService {
         try {
             if (requestType.equals(RequestType.REVIEW)) {
                 return reviewMicroserviceUrl + apiUrl.replace(" ", "%20");
-            } else if (requestType.equals(RequestType.SUBMISSION)) {
-                return submissionMicroserviceUrl + apiUrl.replace(" ", "%20");
             }
             return userMicroserviceUrl + apiUrl.replace(" ", "%20");
         } catch (Exception e) {

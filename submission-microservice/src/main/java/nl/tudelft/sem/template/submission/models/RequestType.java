@@ -2,8 +2,7 @@ package nl.tudelft.sem.template.submission.models;
 
 public enum RequestType {
     REVIEW("review"),
-    USER("user"),
-    SUBMISSION("submission");
+    USER("user");
 
     private String value;
 

@@ -60,14 +60,11 @@ public class SubmissionService {
      * @return response with created submission if success, otherwise error
      */
     public ResponseEntity<String> add(Submission submission) {
-        System.out.println();
-        System.out.println("Starting to add a submission");
         if (!checkDuplicateSubmissions(submission)) {
-            System.out.println("Oh no, duplicate found!");
             return ResponseEntity.status(HttpStatus.CONFLICT).body(
                     "A submission with such a title already exists in this event!");
         }
-        System.out.println("All is good, no duplicates");
+
         //if (!trackService.checkSubmissionDeadline(submission.getTrackId()))
         //    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         //}
@@ -78,6 +75,7 @@ public class SubmissionService {
         //                submission.getLink())) {
         //            return ResponseEntity.badRequest().build();
         //        }
+
         submission.setId(UUID.randomUUID());
         submission.setCreated(LocalDateTime.now());
         submission.setUpdated(submission.getCreated());
@@ -160,11 +158,10 @@ public class SubmissionService {
      * @return boolean which returns ture if there are no identical submissions
      */
     public boolean checkDuplicateSubmissions(Submission submission) {
-        System.out.println("getting the url to check for duplicates");
-        String url = "submission?title=" + submission.getTitle()
-                + "&eventId=" + submission.getEventId();
 
-        List<Submission> submissions = httpRequestService.getList(url, Submission.class, RequestType.SUBMISSION);
+        List<Submission> submissions = get(null, null, null,
+                submission.getTitle(), null, null, submission.getEventId(),
+                null, null).getBody();
         return submissions.isEmpty();
     }
 
