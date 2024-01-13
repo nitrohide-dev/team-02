@@ -2,23 +2,25 @@ package nl.tudelft.sem.template.submission.components.strategy;
 
 import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
-import nl.tudelft.sem.template.model.SubmissionStatus;
+import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public class SubmissionAuthorStrategy implements SubmissionGetStrategy {
-    private final SubmissionService submissionService;
+    private final SubmissionRepository submissionRepository;
 
     /**
      * TrackStrategy constructor.
      *
-     * @param submissionService statistics repository.
+     * @param submissionRepository submission repository.
      */
-    public SubmissionAuthorStrategy(SubmissionService submissionService) {
-        this.submissionService = submissionService;
+    public SubmissionAuthorStrategy(SubmissionRepository submissionRepository) {
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -34,21 +36,82 @@ public class SubmissionAuthorStrategy implements SubmissionGetStrategy {
      * @param type     Filter by submission type (optional)
      * @return list of submissions. All submissions are returned if no criteria specified.
      */
-    public List<Submission> getSubmission(UUID id, Long submittedBy, List<Long> authors,
+    public List<Submission> getSubmissions(Long userId, UUID id, Long submittedBy, List<Long> authors,
                                         String title, List<String> keywords, Long trackId,
                                         Long eventId, PaperType type) {
 
-        List<Submission> submissions = submissionService.get(id, submittedBy, authors, title,
-                keywords, trackId, eventId, type).getBody();
+        Specification<Submission> specification = Specification.where(null);
 
-        //here I'll later insert an authentication check when I'll get the authentication microservice working
+        if (id != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.equal(root.get("id"), id));
+        }
+
+        if (submittedBy != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.equal(root.get("submittedBy"), submittedBy));
+        }
+
+        if (authors != null && !authors.isEmpty()) {
+            specification = specification.and((root, query, builder) ->
+                    root.get("authors").in(authors));
+        }
+
+        if (title != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.like(builder.lower(root.get("title")), title.toLowerCase()));
+        }
+
+        if (keywords != null && !keywords.isEmpty()) {
+            specification = specification.and((root, query, builder) ->
+                    root.get("keywords").in(keywords));
+        }
+
+        if (trackId != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.equal(root.get("trackId"), trackId));
+        }
+
+        if (eventId != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.equal(root.get("eventId"), eventId));
+        }
+
+        if (type != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.equal(root.get("type"), type));
+        }
+
+
+        List<Submission> submissions = submissionRepository.findAll(specification);
+
         for (Submission submission : submissions) {
-            submission.setStatus(null);
-            submission.setCreated(null);
-            submission.setUpdated(null);
+            if (!submission.getAuthors().contains(userId)) {
+                submission.setStatus(null);
+                submission.setCreated(null);
+                submission.setUpdated(null);
+            }
         }
 
 
         return submissions;
+    }
+
+    /**
+     * Method for getting a single submission by its submission id.
+     *
+     * @param userId the id of the user trying to get the submission
+     * @param id the id of the submission that we are getting
+     * @return submission that we found using the id
+     */
+    @Override
+    public ResponseEntity<Submission> getSubmission(Long userId, UUID id) {
+        Optional<Submission> submission = submissionRepository.findById(id);
+        if (submission.isPresent() && !submission.get().getId().equals(id)) {
+            submission.get().setUpdated(null);
+            submission.get().setCreated(null);
+            submission.get().setStatus(null);
+        }
+        return ResponseEntity.of(submission);
     }
 }

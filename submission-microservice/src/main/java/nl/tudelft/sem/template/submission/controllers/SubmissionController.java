@@ -113,6 +113,17 @@ public class SubmissionController implements SubmissionApi {
     }
 
     /**
+     * Returns submission with a provided id.
+     *
+     * @param submissionId ID of submission to return (required)
+     * @return submission if it is found for a given id, error otherwise
+     */
+    @Override
+    public ResponseEntity<Submission> getSubmissionById(UUID submissionId) {
+        return submissionService.getById(submissionId);
+    }
+
+    /**
      * Returns list of submissions matching search criteria.
      *
      * @param id        Filter by submission id (optional)
