@@ -32,7 +32,7 @@ public class RegistrationServiceTests {
     @Test
     public void createUser_withValidData_worksCorrectly() throws Exception {
         // Arrange
-        final NetId testUser = new NetId("SomeUser");
+        final Email testUser = new Email("SomeUser");
         final Password testPassword = new Password("password123");
         final HashedPassword testHashedPassword = new HashedPassword("hashedTestPassword");
         when(mockPasswordEncoder.hash(testPassword)).thenReturn(testHashedPassword);
@@ -41,16 +41,16 @@ public class RegistrationServiceTests {
         registrationService.registerUser(testUser, testPassword);
 
         // Assert
-        AppUser savedUser = userRepository.findByNetId(testUser).orElseThrow();
+        AppUser savedUser = userRepository.findByEmail(testUser).orElseThrow();
 
-        assertThat(savedUser.getNetId()).isEqualTo(testUser);
+        assertThat(savedUser.getEmail()).isEqualTo(testUser);
         assertThat(savedUser.getPassword()).isEqualTo(testHashedPassword);
     }
 
     @Test
     public void createUser_withExistingUser_throwsException() {
         // Arrange
-        final NetId testUser = new NetId("SomeUser");
+        final Email testUser = new Email("SomeUser");
         final HashedPassword existingTestPassword = new HashedPassword("password123");
         final Password newTestPassword = new Password("password456");
 
@@ -64,9 +64,9 @@ public class RegistrationServiceTests {
         assertThatExceptionOfType(Exception.class)
                 .isThrownBy(action);
 
-        AppUser savedUser = userRepository.findByNetId(testUser).orElseThrow();
+        AppUser savedUser = userRepository.findByEmail(testUser).orElseThrow();
 
-        assertThat(savedUser.getNetId()).isEqualTo(testUser);
+        assertThat(savedUser.getEmail()).isEqualTo(testUser);
         assertThat(savedUser.getPassword()).isEqualTo(existingTestPassword);
     }
 }
