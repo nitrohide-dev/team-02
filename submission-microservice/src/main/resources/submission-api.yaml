@@ -110,15 +110,15 @@ paths:
       operationId: addSubmission
       requestBody:
         content:
-#          application/json:
-#            schema:
-#              $ref: '#/components/schemas/Submission'
-#          application/xml:
-#            schema:
-#              $ref: '#/components/schemas/Submission'
-#          application/x-www-form-urlencoded:
-#            schema:
-#              $ref: '#/components/schemas/Submission'
+          #          application/json:
+          #            schema:
+          #              $ref: '#/components/schemas/Submission'
+          #          application/xml:
+          #            schema:
+          #              $ref: '#/components/schemas/Submission'
+          #          application/x-www-form-urlencoded:
+          #            schema:
+          #              $ref: '#/components/schemas/Submission'
           multipart/form-data:
             schema:
               type: object
@@ -303,6 +303,7 @@ paths:
   /stats/event/{eventId}/{userId}:
     get:
       description: Get statistics of this event
+      operationId: eventStatisticsGet
       security:
         - api_key: [ ]
       tags:
@@ -323,6 +324,7 @@ paths:
   /stats/track/{trackId}/{userId}:
     get:
       description: Get statistics of this track
+      operationId: trackStatisticsGet
       security:
         - api_key: [ ]
       tags:

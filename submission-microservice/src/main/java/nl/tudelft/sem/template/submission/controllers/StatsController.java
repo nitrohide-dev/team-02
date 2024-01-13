@@ -27,7 +27,7 @@ public class StatsController implements StatsApi {
     }
 
     @Override
-    public ResponseEntity<Statistics> statsEventEventIdUserIdGet(Long eventId, Long userId) {
+    public ResponseEntity<Statistics> eventStatisticsGet(Long eventId, Long userId) {
         try {
             Statistics output = statisticsService.getStatistics(userId, eventId);
             return ResponseEntity.of(Optional.of(output));
@@ -44,7 +44,7 @@ public class StatsController implements StatsApi {
     }
 
     @Override
-    public ResponseEntity<Statistics> statsTrackTrackIdUserIdGet(Long trackId, Long userId) {
+    public ResponseEntity<Statistics> trackStatisticsGet(Long trackId, Long userId) {
         try {
             Statistics output = statisticsService.getStatistics(userId, trackId);
             return ResponseEntity.of(Optional.of(output));
