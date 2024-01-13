@@ -84,12 +84,6 @@ paths:
             $ref: '#/components/schemas/PaperType'
           in: query
 
-        - name: status
-          description: Filter by submission status
-          schema:
-            $ref: '#/components/schemas/SubmissionStatus'
-          in: query
-
       responses:
         '200':
           description: Search successful
@@ -157,33 +151,6 @@ paths:
           description: Deadline passed
         '409':
           description: A submission with such a title already exists in this event
-
-  /submission/{submissionId}:
-    get:
-      security:
-        - api_key: [ ]
-      tags:
-        - submission
-      summary: Find submission by ID
-      description: Returns a single submission
-      operationId: getSubmissionById
-      parameters:
-        - $ref: '#/components/parameters/SubmissionId'
-
-      responses:
-        '200':
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Submission'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Submission'
-        '400':
-          description: Invalid ID supplied
-        '404':
-          description: Submission not found
 
   /submission/{submissionId}/{userId}:
     get:

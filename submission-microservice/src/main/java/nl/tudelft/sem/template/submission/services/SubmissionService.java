@@ -161,25 +161,26 @@ public class SubmissionService {
 
         List<Submission> submissions = get(null, null, null,
                 submission.getTitle(), null, null, submission.getEventId(),
-                null, null).getBody();
+                null).getBody();
         return submissions.isEmpty();
     }
 
     /**
      * Returns list of submissions matching search criteria.
      *
-     * @param eventId    Filter by event id (optional)
-     * @param trackId    Filter by track id (optional)
+     * @param id        Filter by submission id (optional)
+     * @param submittedBy Filter by person who submitted (optional)
      * @param authors   Filter by author id (optional)
-     * @param keywords Filters by keywords (optional)
-     * @param status   Filter by status (optional)
      * @param title     Filter by submission name (optional)
+     * @param keywords Filters by keywords (optional)
+     * @param trackId    Filter by track id (optional)
+     * @param eventId    Filter by event id (optional)
      * @param type     Filter by submission type (optional)
      * @return list of submissions. All submissions are returned if no criteria specified.
      */
     public ResponseEntity<List<Submission>> get(UUID id, Long submittedBy, List<Long> authors,
                                                 String title, List<String> keywords, Long trackId,
-                                                Long eventId, PaperType type, SubmissionStatus status) {
+                                                Long eventId, PaperType type) {
 
         Specification<Submission> specification = Specification.where(null);
 
@@ -221,11 +222,6 @@ public class SubmissionService {
         if (type != null) {
             specification = specification.and((root, query, builder) ->
                     builder.equal(root.get("type"), type));
-        }
-
-        if (status != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.equal(root.get("status"), status));
         }
 
         return ResponseEntity.ok().body(submissionRepository.findAll(specification));
