@@ -26,19 +26,22 @@ paths:
       tags:
         - submission
       parameters:
-        - name: event
-          description: Filter by event id
+
+        - name: id
+          description: ID of submission to return
+          schema:
+            type: string
+            format: uuid
+          in: query
+
+        - name: submittedBy
+          description: Filter by the id of the person who submitted the submission
           schema:
             type: integer
             format: int64
           in: query
-        - name: track
-          description: Filter by track id
-          schema:
-            type: integer
-            format: int64
-          in: query
-        - name: author
+
+        - name: authors
           description: Filter by author id
           schema:
             type: array
@@ -46,6 +49,13 @@ paths:
               type: integer
               format: int64
           in: query
+
+        - name: title
+          description: Filter by submission title
+          schema:
+            type: string
+          in: query
+
         - name: keywords
           description: Filters by keywords
           schema:
@@ -53,19 +63,36 @@ paths:
             items:
               type: string
           in: query
+
+        - name: trackId
+          description: Filter by track id
+          schema:
+            type: integer
+            format: int64
+          in: query
+
+        - name: eventId
+          description: Filter by event id
+          schema:
+            type: integer
+            format: int64
+          in: query
+
+        - name: type
+          description: Filter by submission type
+          schema:
+            $ref: '#/components/schemas/PaperType'
+          in: query
+
         - name: status
-          description: Filter by status
+          description: Filter by submission status
           schema:
             $ref: '#/components/schemas/SubmissionStatus'
           in: query
-        - name: name
-          description: Filter by submission name
-          schema:
-            type: string
-          in: query
+
       responses:
         '200':
-          description: Search successfull
+          description: Search successful
           content:
             application/json:
               schema:
@@ -94,6 +121,7 @@ paths:
               $ref: '#/components/schemas/Submission'
         required: true
       responses:
+
         '201':
           description: Successfully created
           headers:
@@ -103,16 +131,21 @@ paths:
                 type: string
                 format: url
           content:
+
             application/json:
               schema:
-                $ref: '#/components/schemas/Submission'
+                type: string
+
             application/xml:
               schema:
-                $ref: '#/components/schemas/Submission'
+                type: string
+
         '400':
           description: Badly formatted input
         '403':
           description: Deadline passed
+        '409':
+          description: A submission with such a title already exists in this event
 
   /submission/{submissionId}:
     get:
@@ -135,12 +168,15 @@ paths:
         '200':
           description: successful operation
           content:
+
             application/json:
               schema:
                 $ref: '#/components/schemas/Submission'
+
             application/xml:
               schema:
                 $ref: '#/components/schemas/Submission'
+
         '400':
           description: Invalid ID supplied
         '404':
@@ -161,35 +197,45 @@ paths:
           in: path
       requestBody:
         content:
+
           application/json:
             schema:
               $ref: '#/components/schemas/Submission'
+
           application/xml:
             schema:
               $ref: '#/components/schemas/Submission'
+
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/Submission'
+
         required: true
       responses:
         '200':
           description: Successfully updated submission
           content:
+
             application/json:
               schema:
                 $ref: '#/components/schemas/Submission'
+
             application/xml:
               schema:
                 $ref: '#/components/schemas/Submission'
+
             application/x-www-form-urlencoded:
               schema:
                 $ref: '#/components/schemas/Submission'
+
         '404':
           description: Submission id not found
         '400':
           description: Badly formatted request
         '403':
           description: Deadline passed
+        '409':
+          description: A submission with such a title already exists in this event
 
 
     delete:
@@ -246,6 +292,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Statistics"
+        '400':
+          description: Event not found
+
   /stats/track/{trackId}/{userId}:
     get:
       description: Get statistics of this track
@@ -263,6 +312,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Statistics"
+        '400':
+          description: Track not found
 
 components:
   parameters:
@@ -314,54 +365,67 @@ components:
       x-class-extra-annotation: "@javax.persistence.Entity"
       type: object
       properties:
-        updated:
-          type: string
-          format: date-time
-        created:
-          type: string
-          format: date-time
+
         id:
           type: string
           format: uuid
           uniqueItems: true
           x-field-extra-annotation: "@javax.persistence.Id"
 
-        status:
-          $ref: "#/components/schemas/SubmissionStatus"
         submittedBy:
           type: integer
           format: int64
           description: The ID of the author that submitted this paper
-        title:
-          type: string
-          example: "Paper title"
+
         authors:
           type: array
           x-field-extra-annotation: "@javax.persistence.ElementCollection(targetClass=Long.class)"
           items:
             type: integer
             format: int64
-        abstract:
+
+        title:
           type: string
-          maxLength: 2000
+          example: "Paper title"
+
         keywords:
           type: array
           x-field-extra-annotation: "@javax.persistence.ElementCollection(targetClass=String.class)"
           items:
             type: string
+
+        abstract:
+          type: string
+          maxLength: 2000
+
         link:
           type: string
           example: "https://github.com/"
-        type:
-          $ref: '#/components/schemas/PaperType'
+
         trackId:
           type: integer
           format: int64
           example: 10
+
         eventId:
           type: integer
           format: int64
           example: 10
+
+        type:
+          $ref: '#/components/schemas/PaperType'
+
+        status:
+          $ref: "#/components/schemas/SubmissionStatus"
+
+        updated:
+          type: string
+          format: date-time
+
+        created:
+          type: string
+          format: date-time
+
       required: [ id, submittedBy, title, authors, abstract, file, created, updated, status, type, trackId, eventId ]
       xml:
         name: submission

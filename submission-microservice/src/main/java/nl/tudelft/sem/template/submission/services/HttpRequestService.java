@@ -8,9 +8,11 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Service
@@ -21,6 +23,7 @@ public class HttpRequestService {
 
     private final String userMicroserviceUrl = "http://localhost:8085/";
     private final String reviewMicroserviceUrl = "http://localhost:8082/";
+    private final String submissionMicroserviceUrl = "http://localhost:8084/";
 
     public class BadResponseException extends RuntimeException {
         // Custom exception class for representing bad responses
@@ -37,19 +40,25 @@ public class HttpRequestService {
      * @return full url
      */
     private String buildUrl(String apiUrl, RequestType requestType) {
-        if (requestType.equals(RequestType.REVIEW)) {
-            return reviewMicroserviceUrl + apiUrl;
+        try {
+            if (requestType.equals(RequestType.REVIEW)) {
+                return reviewMicroserviceUrl + apiUrl.replace(" ", "%20");
+            } else if (requestType.equals(RequestType.SUBMISSION)) {
+                return submissionMicroserviceUrl + apiUrl.replace(" ", "%20");
+            }
+            return userMicroserviceUrl + apiUrl.replace(" ", "%20");
+        } catch (Exception e) {
+            throw new RuntimeException("Something went wrong when creating the url");
         }
-        return userMicroserviceUrl + apiUrl;
     }
 
     /**
-     * get request method.
+     * get list request method.
      *
      * @param url where to send the get request to
-     * @return a string which is the result of the get query
-     * @throws IOException          an exception that may be thrown
-     * @throws InterruptedException an exception that may be thrown
+     * @param responseType what type is the object that we are trying to receive
+     * @param requestType where to send the request to
+     * @return object which is the result of the get query
      */
     public <T> T get(String url, Class<T> responseType, RequestType requestType) {
         url = buildUrl(url, requestType);
@@ -59,8 +68,8 @@ public class HttpRequestService {
                     .GET()
                     .build();
             String response = httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body();
-            T object;
             try {
+                T object;
                 object = objectMapper.readValue(response, responseType);
                 return object;
             } catch (JsonProcessingException e) {
@@ -76,9 +85,9 @@ public class HttpRequestService {
      * get list request method.
      *
      * @param url where to send the get request to
-     * @return a string which is the result of the get query
-     * @throws IOException          an exception that may be thrown
-     * @throws InterruptedException an exception that may be thrown
+     * @param responseType what type is the object that we are trying to receive
+     * @param requestType where to send the request to
+     * @return list of objects which is the result of the get query
      */
     public <T> List<T> getList(String url, Class<T> responseType, RequestType requestType) {
         url = buildUrl(url, requestType);
@@ -88,8 +97,8 @@ public class HttpRequestService {
                     .GET()
                     .build();
             String response = httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body();
-            List<T> objects;
             try {
+                List<T> objects;
                 objects = objectMapper.readValue(response, new TypeReference<>() {
                 });
                 return objects;
@@ -101,48 +110,5 @@ public class HttpRequestService {
             throw new BadResponseException("Error occurred while making the HTTP request");
         }
 
-    }
-
-
-    /**
-     * post request method.
-     *
-     * @param url         where to send the post request to
-     * @param requestBody what you are sending with the post request
-     * @return a string which is the result of the post query
-     */
-    public HttpResponse<String> post(String url, String requestBody) throws IOException, InterruptedException {
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                    .build();
-
-            return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException | InterruptedException exception) {
-            throw new BadResponseException("Error occurred while making the HTTP request");
-        }
-    }
-
-    /**
-     * put request method.
-     *
-     * @param url         where to send the put request to
-     * @param requestBody what you ase sending with the put request
-     * @return a string which is the result of the put request
-     */
-    public HttpResponse<String> put(String url, String requestBody) throws IOException, InterruptedException {
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Content-Type", "application/json")
-                    .PUT(HttpRequest.BodyPublishers.ofString(requestBody))
-                    .build();
-
-            return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException | InterruptedException exception) {
-            throw new BadResponseException("Error occurred while making the HTTP request");
-        }
     }
 }

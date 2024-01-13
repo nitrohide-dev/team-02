@@ -1,16 +1,20 @@
 package nl.tudelft.sem.template.submission.controllers;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import nl.tudelft.sem.template.api.SubmissionApi;
+import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 
@@ -39,7 +43,7 @@ public class SubmissionController implements SubmissionApi {
      * @return response with created submission if success, otherwise error
      */
     @Override
-    public ResponseEntity<Submission> addSubmission(Submission submission) {
+    public ResponseEntity<String> addSubmission(Submission submission) {
         return submissionService.add(submission);
     }
 
@@ -68,18 +72,24 @@ public class SubmissionController implements SubmissionApi {
     /**
      * Returns list of submissions matching search criteria.
      *
-     * @param track    Filter by track id (optional)
-     * @param author   Filter by author id (optional)
+     * @param id        Filter by submission id (optional)
+     * @param submittedBy Filter by person who submitted (optional)
+     * @param authors   Filter by author id (optional)
+     * @param title     Filter by submission name (optional)
      * @param keywords Filters by keywords (optional)
+     * @param trackId    Filter by track id (optional)
+     * @param eventId    Filter by event id (optional)
+     * @param type     Filter by submission type (optional)
      * @param status   Filter by status (optional)
-     * @param name     Filter by submission name (optional)
      * @return list of submissions. All submissions are returned if no criteria specified.
      */
     @Override
-    public ResponseEntity<List<Submission>> submissionGet(Long event, Long track,
-                                                          List<Long> author, List<String> keywords,
-                                                          SubmissionStatus status, String name) {
-        return ResponseEntity.of(Optional.of(submissionRepository.findAll()));
+    public ResponseEntity<List<Submission>> submissionGet(UUID id, Long submittedBy, List<Long> authors,
+                                                          String title, List<String> keywords, Long trackId,
+                                                          Long eventId, PaperType type, SubmissionStatus status) {
+
+        return submissionService.get(id, submittedBy, authors, title,
+                keywords, trackId, eventId, type, status);
     }
 
     /**

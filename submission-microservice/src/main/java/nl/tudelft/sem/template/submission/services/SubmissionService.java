@@ -1,10 +1,13 @@
 package nl.tudelft.sem.template.submission.services;
 
+import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,10 +47,17 @@ public class SubmissionService {
      * @param submission new submission
      * @return response with created submission if success, otherwise error
      */
-    public ResponseEntity<Submission> add(Submission submission) {
-        //if (checkDuplicateSubmissions(submission)) {
+    public ResponseEntity<String> add(Submission submission) {
+        System.out.println();
+        System.out.println("Starting to add a submission");
+        if (!checkDuplicateSubmissions(submission)) {
+            System.out.println("Oh no, duplicate found!");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    "A submission with such a title already exists in this event!");
+        }
+        System.out.println("All is good, no duplicates");
         //if (!trackService.checkSubmissionDeadline(submission.getTrackId()))
-        //return ResponseEntity.badRequest().build();
+        //    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         //}
         submission.setId(UUID.randomUUID());
         submission.setCreated(LocalDateTime.now());
@@ -62,7 +72,10 @@ public class SubmissionService {
         authors.add(submission.getSubmittedBy());
         submission.setAuthors(authors);
         statisticsService.updateStatistics(null, submission);
-        return ResponseEntity.ok(submissionRepository.save(submission));
+        submissionRepository.save(submission);
+        return ResponseEntity.status(HttpStatus.CREATED).body("""
+                Submission added successfully!
+                Here is the id for your new submission:\s""" + submission.getId());
     }
 
     /**
@@ -100,7 +113,6 @@ public class SubmissionService {
         Submission submission = optional.get();
 
         statisticsService.updateStatistics(submission, updatedSubmission);
-        submission.setStatus(updatedSubmission.getStatus());
         submission.setTitle(updatedSubmission.getTitle());
         submission.setAbstract(updatedSubmission.getAbstract());
         submission.setAuthors(updatedSubmission.getAuthors());
@@ -123,11 +135,78 @@ public class SubmissionService {
      * @return boolean which returns ture if there are no identical submissions
      */
     public boolean checkDuplicateSubmissions(Submission submission) {
+        System.out.println("getting the url to check for duplicates");
         String url = "submission?title=" + submission.getTitle()
-                + "?eventId=" + submission.getEventId();
+                + "&eventId=" + submission.getEventId();
 
-        List<Submission> submissions = httpRequestService.getList(url, Submission.class, RequestType.USER);
+        List<Submission> submissions = httpRequestService.getList(url, Submission.class, RequestType.SUBMISSION);
         return submissions.isEmpty();
+    }
+
+    /**
+     * Returns list of submissions matching search criteria.
+     *
+     * @param eventId    Filter by event id (optional)
+     * @param trackId    Filter by track id (optional)
+     * @param authors   Filter by author id (optional)
+     * @param keywords Filters by keywords (optional)
+     * @param status   Filter by status (optional)
+     * @param title     Filter by submission name (optional)
+     * @param type     Filter by submission type (optional)
+     * @return list of submissions. All submissions are returned if no criteria specified.
+     */
+    public ResponseEntity<List<Submission>> get(UUID id, Long submittedBy, List<Long> authors,
+                                                String title, List<String> keywords, Long trackId,
+                                                Long eventId, PaperType type, SubmissionStatus status) {
+
+        Specification<Submission> specification = Specification.where(null);
+
+        if (id != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.equal(root.get("id"), id));
+        }
+
+        if (submittedBy != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.equal(root.get("submittedBy"), submittedBy));
+        }
+
+        if (authors != null && !authors.isEmpty()) {
+            specification = specification.and((root, query, builder) ->
+                    root.get("authors").in(authors));
+        }
+
+        if (title != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.like(builder.lower(root.get("title")), title.toLowerCase()));
+        }
+
+        if (keywords != null && !keywords.isEmpty()) {
+            specification = specification.and((root, query, builder) ->
+                    root.get("keywords").in(keywords));
+        }
+
+        if (trackId != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.equal(root.get("trackId"), trackId));
+        }
+
+        if (eventId != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.equal(root.get("eventId"), eventId));
+        }
+
+        if (type != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.equal(root.get("type"), type));
+        }
+
+        if (status != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.equal(root.get("status"), status));
+        }
+
+        return ResponseEntity.ok().body(submissionRepository.findAll(specification));
     }
 }
 
