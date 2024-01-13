@@ -35,5 +35,33 @@ public class TrackService {
         return (LocalDateTime.parse(track.getSubmitDeadline()).isAfter(LocalDateTime.now()));
     }
 
+    /**
+     * Check if the required fields are actually present.
+     *
+     * @param title title of paper
+     * @param authors list of authors
+     * @param bstract abstract
+     * @param keywords list of keywords
+     * @param link link
+     * @return true if all good, false if something is missing
+     */
+    public boolean requiredFields(String title, List<Long> authors, String bstract, List<String> keywords, String link) {
+        if (title == null || title.trim().isEmpty()) {
+            return false;
+        }
+        if (authors == null || authors.isEmpty()) {
+            return false;
+        }
+        if (bstract == null || bstract.trim().isEmpty()) {
+            return false;
+        }
+        if (keywords == null || keywords.isEmpty()) {
+            return false;
+        }
+        if (link == null || link.trim().isEmpty()) {
+            return false;
+        }
+        return true;
+    }
 }
 
