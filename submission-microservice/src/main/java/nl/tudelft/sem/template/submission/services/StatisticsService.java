@@ -8,7 +8,6 @@ import nl.tudelft.sem.template.submission.components.strategy.TrackStrategy;
 import nl.tudelft.sem.template.submission.models.Chair;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -82,14 +81,6 @@ public class StatisticsService {
         return strategy.getStatistics(id);
     }
 
-    private long generateId() {
-        List<Statistics> allStats = statisticsRepository.findAll(Sort.by("id"));
-        if (allStats.size() == 0) {
-            return 0;
-        }
-        return allStats.get(allStats.size() - 1).getId() + 1;
-    }
-
     /**
      * Updates statistics for a given track after a new submission was added.
      *
@@ -101,30 +92,27 @@ public class StatisticsService {
         Statistics trackStats;
 
         if (oldSubmission == null) {
-            trackStats = new Statistics();
-            trackStats.setId(newSubmission.getTrackId());
-            trackStats.setTotalSubmissions(0L);
+            long trackId = newSubmission.getTrackId();
+            Optional<Statistics> optional = statisticsRepository.findById(trackId);
+            if (optional.isEmpty()) {
+                trackStats = new Statistics();
+                trackStats.setId(newSubmission.getTrackId());
+                trackStats.setTotalSubmissions(0L);
+            } else {
+                trackStats = optional.get();
+            }
 
             addSubmission(trackStats, newSubmission);
         } else {
             long oldTrackId = oldSubmission.getTrackId();
             Optional<Statistics> optional = statisticsRepository.findById(oldTrackId);
             trackStats = optional.get();
-            deleteSubmission(trackStats, oldSubmission);
 
-            if (newSubmission != null) {
-                long newTrackId;
-                if (newSubmission.getTrackId() == null) {
-                    newTrackId = oldTrackId;
-                } else {
-                    newTrackId = newSubmission.getTrackId();
-                }
-
-                Optional<Statistics> newOptional = statisticsRepository.findById(newTrackId);
-                Statistics newTrackStats = newOptional.get();
-                addSubmission(newTrackStats, newSubmission);
+            if (newSubmission == null) {
+                deleteSubmission(trackStats, oldSubmission);
+            } else {
+                updateSubmission(trackStats, oldSubmission, newSubmission);
             }
-
         }
     }
 
@@ -134,7 +122,7 @@ public class StatisticsService {
      * @param statistics current statistics record
      * @param submission new submission.
      */
-    public void addSubmission(Statistics statistics, Submission submission) {
+    private void addSubmission(Statistics statistics, Submission submission) {
         SubmissionStatus status = submission.getStatus();
         if (status.equals(SubmissionStatus.ACCEPTED)) {
             statistics.setAccepted(statistics.getAccepted() + 1);
@@ -162,7 +150,7 @@ public class StatisticsService {
      * @param statistics current statistics record
      * @param submission removed submission.
      */
-    public void deleteSubmission(Statistics statistics, Submission submission) {
+    private void deleteSubmission(Statistics statistics, Submission submission) {
         SubmissionStatus status = submission.getStatus();
         if (status.equals(SubmissionStatus.ACCEPTED)) {
             statistics.setAccepted(statistics.getAccepted() - 1);
@@ -178,9 +166,19 @@ public class StatisticsService {
         }
 
         long n = statistics.getTotalSubmissions();
-        statistics.setTotalSubmissions(statistics.getTotalSubmissions() - 1);
+        statistics.setTotalSubmissions(n - 1);
         statistics.setAverageNumberOfAuthors((statistics.getAverageNumberOfAuthors()
-                * n - submission.getAuthors().size()) / (n + 1));
+                * n - submission.getAuthors().size()) / (n - 1));
         statisticsRepository.delete(statistics);
+    }
+
+    private void updateSubmission(Statistics statistics, Submission oldSubmission, Submission newSubmission) {
+        long oldAuthorsNumber = oldSubmission.getAuthors().size();
+        long newAuthorsNumber = newSubmission.getAuthors().size();
+
+        long oldTotalAuthors = statistics.getAverageNumberOfAuthors() * statistics.getTotalSubmissions();
+        long newTotalAuthors = oldTotalAuthors - oldAuthorsNumber + newAuthorsNumber;
+        statistics.setAverageNumberOfAuthors(newTotalAuthors / statistics.getTotalSubmissions());
+        statisticsRepository.save(statistics);
     }
 }

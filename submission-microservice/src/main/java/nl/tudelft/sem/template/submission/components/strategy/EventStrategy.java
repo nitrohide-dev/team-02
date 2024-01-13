@@ -62,12 +62,17 @@ public class EventStrategy implements StatisticsStrategy {
         List<Statistics> trackStatistics = statisticsRepository.findAllById(Arrays.asList(tracksIds));
 
         Statistics statistics = new Statistics();
+        long totalAuthors = 0L;
         for (Statistics stats : trackStatistics) {
+            statistics.setTotalSubmissions(statistics.getTotalSubmissions() + stats.getTotalSubmissions());
             statistics.setAccepted(statistics.getAccepted() + stats.getAccepted());
-            statistics.setAccepted(statistics.getOpen() + stats.getOpen());
-            statistics.setAccepted(statistics.getRejected() + stats.getRejected());
-            statistics.setAccepted(statistics.getUnderReview() + stats.getUnderReview());
+            statistics.setOpen(statistics.getOpen() + stats.getOpen());
+            statistics.setRejected(statistics.getRejected() + stats.getRejected());
+            statistics.setUnderReview(statistics.getUnderReview() + stats.getUnderReview());
+            totalAuthors += stats.getAverageNumberOfAuthors() * stats.getTotalSubmissions();
         }
+
+        statistics.setAverageNumberOfAuthors(totalAuthors / statistics.getTotalSubmissions());
 
         return statistics;
     }
