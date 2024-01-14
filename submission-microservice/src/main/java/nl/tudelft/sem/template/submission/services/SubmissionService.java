@@ -61,12 +61,12 @@ public class SubmissionService {
                     "A submission with such a title already exists in this event!");
         }
 
-//        // checks for correct paper type
-//        String paperType = checkPaperType(submission);
-//        if(paperType != null){
-//            return ResponseEntity.status(HttpStatus.CONFLICT).body(
-//                    paperType);
-//        }
+        // checks for correct paper type
+        String paperType = checkPaperType(submission);
+        if (paperType != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    paperType);
+        }
         /*
         Validator deadlineValidator = new DeadlineValidator(httpRequestService);
         deadlineValidator.setNext(new DuplicateValidator(this));
@@ -236,14 +236,15 @@ public class SubmissionService {
      * @param submission paper submission
      * @return returns null if there's no conflict, otherwise returns message specifying required type
      */
-    public String checkPaperType(Submission submission){
+    public String checkPaperType(Submission submission) {
         Track track = trackService.getTrackById(submission.getTrackId());
         PaperType paperType = track.getPaperType();
-        String incorrectType = "You submitted a paper of incorrect type. The correct type is "+paperType.toString();
-        if (paperType.equals(submission.getType()))
-            { return null;}
-        else
-            {return incorrectType;}
+        String incorrectType = "You submitted a paper of incorrect type. The correct type is " + paperType.toString();
+        if (paperType.equals(submission.getType())) {
+            return null;
+        } else {
+            return incorrectType;
+        }
     }
 }
 
