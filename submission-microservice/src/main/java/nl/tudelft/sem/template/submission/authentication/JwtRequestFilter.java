@@ -53,29 +53,42 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         // Get authorization header
         String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
+        System.out.println(0);
 
         // Check if an authorization header is set
         if (authorizationHeader != null) {
+            System.out.println(1);
             String[] directives = authorizationHeader.split(" ");
+            System.out.println(2);
 
             // Check for the correct auth scheme
             if (directives.length == 2 && directives[0].equals(AUTHORIZATION_AUTH_SCHEME)) {
+                System.out.println(3);
                 String token = directives[1];
+                System.out.println(4);
 
                 try {
+                    System.out.println(5);
                     if (jwtTokenVerifier.validateToken(token)) {
+
+                        System.out.println(6);
                         String netId = jwtTokenVerifier.getNetIdFromToken(token);
+                        System.out.println(7);
                         var authenticationToken = new UsernamePasswordAuthenticationToken(
                                 netId,
                                 null, List.of() // no credentials and no authorities
                         );
+                        System.out.println(8);
                         authenticationToken.setDetails(new WebAuthenticationDetailsSource()
                                 .buildDetails(request));
+                        System.out.println(9);
 
                         // After setting the Authentication in the context, we specify
                         // that the current user is authenticated. So it passes the
                         // Spring Security Configurations successfully.
                         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+                        System.out.println(10);
                     }
 
                 } catch (ExpiredJwtException e) {

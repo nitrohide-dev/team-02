@@ -84,12 +84,6 @@ paths:
             $ref: '#/components/schemas/PaperType'
           in: query
 
-        - name: status
-          description: Filter by submission status
-          schema:
-            $ref: '#/components/schemas/SubmissionStatus'
-          in: query
-
       responses:
         '200':
           description: Search successful
@@ -110,15 +104,15 @@ paths:
       operationId: addSubmission
       requestBody:
         content:
-#          application/json:
-#            schema:
-#              $ref: '#/components/schemas/Submission'
-#          application/xml:
-#            schema:
-#              $ref: '#/components/schemas/Submission'
-#          application/x-www-form-urlencoded:
-#            schema:
-#              $ref: '#/components/schemas/Submission'
+          #          application/json:
+          #            schema:
+          #              $ref: '#/components/schemas/Submission'
+          #          application/xml:
+          #            schema:
+          #              $ref: '#/components/schemas/Submission'
+          #          application/x-www-form-urlencoded:
+          #            schema:
+          #              $ref: '#/components/schemas/Submission'
           multipart/form-data:
             schema:
               type: object
@@ -303,6 +297,7 @@ paths:
   /stats/event/{eventId}/{userId}:
     get:
       description: Get statistics of this event
+      operationId: eventStatisticsGet
       security:
         - api_key: [ ]
       tags:
@@ -323,6 +318,7 @@ paths:
   /stats/track/{trackId}/{userId}:
     get:
       description: Get statistics of this track
+      operationId: trackStatisticsGet
       security:
         - api_key: [ ]
       tags:
@@ -455,6 +451,9 @@ components:
         status:
           $ref: "#/components/schemas/SubmissionStatus"
 
+        conflictsOfInterest:
+          $ref: '#/components/schemas/ConflictsOfInterest'
+
         updated:
           type: string
           format: date-time
@@ -504,12 +503,8 @@ components:
           type: integer
           format: int64
           default: 0
-        keywordsStats:
-          type: map
-          x-field-extra-annotation: "@javax.persistence.ElementCollection(targetClass=Long.class)"
-          items:
-            type: integer
-            format: int64
+        keywordsCounts:
+          $ref: '#/components/schemas/KeywordsCounts'
 
     Track:
       type: object
@@ -544,7 +539,43 @@ components:
         - full-paper
         - short-paper
         - position-paper
-
+    KeywordsCounts:
+      type: object
+      x-class-extra-annotation: "@javax.persistence.Embeddable"
+      properties:
+        keywords:
+          x-field-extra-annotation: "@javax.persistence.ElementCollection(targetClass=String.class)"
+          type: array
+          items:
+            type: string
+        counts:
+          x-field-extra-annotation: "@javax.persistence.ElementCollection(targetClass=Long.class)"
+          type: array
+          items:
+            type: integer
+            format: int64
+    ConflictsOfInterest:
+      type: object
+      x-class-extra-annotation: "@javax.persistence.Embeddable"
+      properties:
+        userIds:
+          type: array
+          x-field-extra-annotation: "@javax.persistence.ElementCollection(targetClass=Long.class)"
+          items:
+            type: integer
+            format: int64
+        types:
+          type: array
+          x-field-extra-annotation: "@javax.persistence.ElementCollection(targetClass=String.class)"
+          items:
+            $ref: "#/components/schemas/ConflictsOfInterestType"
+    ConflictsOfInterestType:
+      type: string
+      enum:
+        - author
+        - recent-collaborator
+        - same-institute-researcher
+        - other
 
   securitySchemes:
     api_key:

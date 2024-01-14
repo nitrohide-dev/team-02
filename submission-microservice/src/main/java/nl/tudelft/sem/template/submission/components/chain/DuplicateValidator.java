@@ -38,7 +38,7 @@ public class DuplicateValidator extends SubmissionValidator {
 
         List<Submission> submissions = submissionService.get(null, null, null,
                 submission.getTitle(), null, null, submission.getEventId(),
-                null, null).getBody();
+                null).getBody();
         if (!submissions.isEmpty()) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("A submission with such a title already exists in this event!");
