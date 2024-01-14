@@ -10,11 +10,13 @@ import nl.tudelft.sem.template.submission.services.SubmissionService;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Component
 public class SubmissionNotAuthorStrategy implements SubmissionGetStrategy {
     private final SubmissionRepository submissionRepository;
 

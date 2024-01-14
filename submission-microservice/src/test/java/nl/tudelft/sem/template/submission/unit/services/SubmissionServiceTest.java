@@ -4,6 +4,7 @@ package nl.tudelft.sem.template.submission.unit.services;
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
+import nl.tudelft.sem.template.submission.components.strategy.SubmissionNotAuthorStrategy;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.StatisticsService;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
@@ -38,6 +39,9 @@ public class SubmissionServiceTest {
 
     @Mock
     private SubmissionValidator submissionValidator;
+
+    @Mock
+    private SubmissionNotAuthorStrategy submissionNotAuthorStrategy;
 
     @InjectMocks
     private SubmissionService submissionService;
