@@ -40,6 +40,7 @@ class ChairTest {
         Chair chair = new Chair(1L, 1L, 1L, Role.GENERAL_CHAIR);
         assertEquals(Role.GENERAL_CHAIR, chair.getRole());
     }
+
     @Test
     void testEquals() {
         Chair chair1 = new Chair(1L, 1L, 1L, Role.GENERAL_CHAIR);
