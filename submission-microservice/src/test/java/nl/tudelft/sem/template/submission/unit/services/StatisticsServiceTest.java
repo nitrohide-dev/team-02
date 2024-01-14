@@ -3,11 +3,13 @@ package nl.tudelft.sem.template.submission.unit.services;
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.*;
 import nl.tudelft.sem.template.submission.Application;
+import nl.tudelft.sem.template.submission.controllers.SubmissionController;
 import nl.tudelft.sem.template.submission.models.Chair;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import nl.tudelft.sem.template.submission.services.StatisticsService;
+import nl.tudelft.sem.template.submission.services.SubmissionService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +36,10 @@ import static org.mockito.Mockito.*;
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class StatisticsServiceTest {
+    @MockBean
+    private SubmissionService submissionService;
+    @MockBean
+    private SubmissionController submissionController;
 
     @MockBean
     private StatisticsRepository repository;

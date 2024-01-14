@@ -84,12 +84,6 @@ paths:
             $ref: '#/components/schemas/PaperType'
           in: query
 
-        - name: status
-          description: Filter by submission status
-          schema:
-            $ref: '#/components/schemas/SubmissionStatus'
-          in: query
-
       responses:
         '200':
           description: Search successful
