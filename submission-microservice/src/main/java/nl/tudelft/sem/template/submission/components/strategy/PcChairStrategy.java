@@ -2,11 +2,12 @@ package nl.tudelft.sem.template.submission.components.strategy;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Statistics;
+import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 
 import java.util.Optional;
 
-public class TrackStrategy implements StatisticsStrategy {
+public class PcChairStrategy implements StatisticsStrategy {
     private final StatisticsRepository statisticsRepository;
 
     /**
@@ -14,8 +15,16 @@ public class TrackStrategy implements StatisticsStrategy {
      *
      * @param statisticsRepository statistics repository.
      */
-    public TrackStrategy(StatisticsRepository statisticsRepository) {
+    public PcChairStrategy(StatisticsRepository statisticsRepository) {
         this.statisticsRepository = statisticsRepository;
+    }
+
+    public boolean checkDeadline(long trackId) {
+        return true;
+    }
+
+    public Submission getSubmission(long userId, Submission submission) {
+        return submission;
     }
 
     /**

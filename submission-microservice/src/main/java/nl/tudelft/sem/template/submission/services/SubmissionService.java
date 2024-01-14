@@ -1,19 +1,18 @@
 package nl.tudelft.sem.template.submission.services;
 
-import nl.tudelft.sem.template.model.PaperType;
 import javassist.NotFoundException;
+import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
-import nl.tudelft.sem.template.submission.components.chain.*;
+import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
+import nl.tudelft.sem.template.submission.components.chain.DeadlineValidator;
 import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
-import nl.tudelft.sem.template.submission.components.strategy.SubmissionAuthorStrategy;
-import nl.tudelft.sem.template.submission.components.strategy.SubmissionGetStrategy;
-import nl.tudelft.sem.template.submission.components.strategy.SubmissionNotAuthorStrategy;
-import nl.tudelft.sem.template.submission.models.RequestType;
+import nl.tudelft.sem.template.submission.components.chain.UserValidator;
+import nl.tudelft.sem.template.submission.components.strategy.SubmissionStrategy;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -32,6 +31,7 @@ public class SubmissionService {
     private final TrackService trackService;
     private final HttpRequestService httpRequestService;
     private final AuthManager authManager;
+    private SubmissionValidator handler;
 
     /**
      * Submission Service constructor.
@@ -51,51 +51,25 @@ public class SubmissionService {
         this.authManager = authManager;
     }
 
+    private void setupChain() {
+        handler = new UserValidator(submissionRepository, httpRequestService, trackService, authManager);
+        handler.setNext(new DeadlineValidator(httpRequestService));
+    }
+
     /**
      * Saves new submission to database.
      *
      * @param submission new submission
      * @return response with created submission if success, otherwise error
      */
-    public ResponseEntity<String> add(Submission submission) {
+    public ResponseEntity<String> add(Submission submission) throws DeadlinePassedException, IllegalAccessException {
         if (!checkDuplicateSubmissions(submission)) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(
                     "A submission with such a title already exists in this event!");
         }
-        /*
-        Validator deadlineValidator = new DeadlineValidator(httpRequestService);
-        deadlineValidator.setNext(new DuplicateValidator(this));
-
-        Validator handler = new UserValidator(httpRequestService, authManager);
-        handler.setNext(deadlineValidator);
-
-        ResponseEntity<Submission> entity = ResponseEntity.status(HttpStatus.CONFLICT).body(null);
-        entity.getStatusCode();
-
-        ResponseEntity<?> answer = handler.handle(submission, null);
-
-        Long userId;
-
-        if (answer.getStatusCode() == HttpStatus.OK) {
-            userId = (Long) answer.getBody();
-        } else {
-            return (ResponseEntity<String>) answer;
-        }*/
-
-        //if (!trackService.checkSubmissionDeadline(submission.getTrackId()))
-        //    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        //}
-
-        //        if (!trackService.requiredFields(submission.getTitle(),
-        //                submission.getAuthors(),
-        //                submission.getAbstract(),
-        //                submission.getKeywords(),
-        //                submission.getLink())) {
-        //            return ResponseEntity.badRequest().build();
-        //        }
 
         submission.setId(UUID.randomUUID());
-        //submission.setSubmittedBy(userId);
+        //  submission.setSubmittedBy(userId);
         submission.setCreated(LocalDateTime.now());
         submission.setUpdated(submission.getCreated());
         submission.setStatus(SubmissionStatus.OPEN);
@@ -111,7 +85,7 @@ public class SubmissionService {
         submissionRepository.save(submission);
         return ResponseEntity.status(HttpStatus.CREATED).body("""
                 Submission added successfully!
-                Here is the id for your new submission:\s""" + submission.getId());
+                Here is the id fCreatedor your new submission:\s""" + submission.getId());
     }
 
     /**
@@ -120,16 +94,17 @@ public class SubmissionService {
      * @param submissionId id of submission to delete
      * @return response ok if submission is deleted, error otherwise
      */
-    public ResponseEntity<Void> delete(@PathVariable("id") UUID submissionId,
-                                       @PathVariable("userId") long userId) throws NotFoundException,
-            IllegalAccessException {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID submissionId) throws NotFoundException,
+            IllegalAccessException, DeadlinePassedException {
         Optional<Submission> deleted = submissionRepository.findById(submissionId);
         if (deleted.isEmpty()) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(404).build();
         }
 
         Submission submission = deleted.get();
-        submissionRepository.delete(submission);
+        setupChain();
+        SubmissionStrategy strategy = handler.handle(null, null, submission, HttpMethod.DELETE);
+        strategy.deleteSubmission(submission);
         statisticsService.updateStatistics(submission, null);
         return ResponseEntity.ok().build();
     }
@@ -142,28 +117,19 @@ public class SubmissionService {
      * @return response with updated submission if success, error otherwise
      */
     public ResponseEntity<Submission> update(@PathVariable("id") UUID submissionId,
-                                             @PathVariable("userId") long userId,
                                              Submission updatedSubmission) throws NotFoundException,
-            IllegalAccessException {
+            IllegalAccessException, DeadlinePassedException {
         Optional<Submission> optional = submissionRepository.findById(submissionId);
         if (optional.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
 
         Submission submission = optional.get();
-
+        setupChain();
+        SubmissionStrategy strategy = handler.handle(null, null, submission, HttpMethod.PUT);
+        strategy.updateSubmission(submission, updatedSubmission);
         statisticsService.updateStatistics(submission, updatedSubmission);
-        submission.setTitle(updatedSubmission.getTitle());
-        submission.setAbstract(updatedSubmission.getAbstract());
-        submission.setAuthors(updatedSubmission.getAuthors());
-        submission.setKeywords(updatedSubmission.getKeywords());
-        submission.setType(updatedSubmission.getType());
-        submission.setEventId(updatedSubmission.getEventId());
-        submission.setTrackId(updatedSubmission.getTrackId());
-        submission.setLink(updatedSubmission.getLink());
-        submission.setUpdated(LocalDateTime.now());
-
-        return ResponseEntity.ok(submissionRepository.save(submission));
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -174,9 +140,9 @@ public class SubmissionService {
      * @param submission a submission that we are trying to add
      * @return boolean which returns ture if there are no identical submissions
      */
-    public boolean checkDuplicateSubmissions(Submission submission) {
+    public boolean checkDuplicateSubmissions(Submission submission) throws DeadlinePassedException, IllegalAccessException {
 
-        List<Submission> submissions = get(null, null, null,
+        List<Submission> submissions = get(null, null,
                 submission.getTitle(), null, null, submission.getEventId(),
                 null).getBody();
         return submissions.isEmpty();
@@ -188,41 +154,64 @@ public class SubmissionService {
      * @param submissionId ID of submission to return (required)
      * @return submission if it is found for a given id, error otherwise
      */
-    public ResponseEntity<Submission> getById(UUID submissionId) {
+    public ResponseEntity<Submission> getById(UUID submissionId) throws DeadlinePassedException,
+            IllegalAccessException {
 
-        SubmissionGetStrategy strategy;
+        Optional<Submission> submission = submissionRepository.findById(submissionId);
+        if (submission.isEmpty()) {
+            return ResponseEntity.status(404).build();
+        }
+        setupChain();
+        SubmissionStrategy strategy = handler.handle(null, null, submission.get(), HttpMethod.GET);
 
-        //imagine that I am doing some proper authentication checks here
-
-        strategy = new SubmissionAuthorStrategy(submissionRepository);
-
-        return strategy.getSubmission(123L, submissionId);
+        return ResponseEntity.ok().body(strategy.getSubmission(submission.get()));
     }
 
     /**
      * Returns list of submissions matching search criteria.
      *
-     * @param id        Filter by submission id (optional)
      * @param submittedBy Filter by person who submitted (optional)
-     * @param authors   Filter by author id (optional)
-     * @param title     Filter by submission name (optional)
-     * @param keywords Filters by keywords (optional)
-     * @param trackId    Filter by track id (optional)
-     * @param eventId    Filter by event id (optional)
-     * @param type     Filter by submission type (optional)
+     * @param authors     Filter by author id (optional)
+     * @param title       Filter by submission name (optional)
+     * @param keywords    Filters by keywords (optional)
+     * @param trackId     Filter by track id (optional)
+     * @param eventId     Filter by event id (optional)
+     * @param type        Filter by submission type (optional)
      * @return list of submissions. All submissions are returned if no criteria specified.
      */
-    public ResponseEntity<List<Submission>> get(UUID id, Long submittedBy, List<Long> authors,
+    public ResponseEntity<List<Submission>> get(Long submittedBy, List<Long> authors,
                                                 String title, List<String> keywords, Long trackId,
                                                 Long eventId, PaperType type) {
-        SubmissionGetStrategy strategy;
 
         //imagine that I am doing some proper authentication checks here
+        List<Submission> submissions = submissionRepository.findAll();
+        List<Submission> result = new ArrayList<>();
+        for (Submission submission : submissions) {
+            if (submittedBy != null && !submittedBy.equals(submission.getSubmittedBy())) {
+                continue;
+            }
+            if (authors != null && !authors.equals(submission.getAuthors())) {
+                continue;
+            }
+            if (title != null && !title.equals(submission.getTitle())) {
+                continue;
+            }
+            if (keywords != null && !keywords.equals(submission.getKeywords())) {
+                continue;
+            }
+            if (trackId != null && !trackId.equals(submission.getTrackId())) {
+                continue;
+            }
+            if (eventId != null && !eventId.equals(submission.getEventId())) {
+                continue;
+            }
+            if (type != null && !type.equals(submission.getType())) {
+                continue;
+            }
+            result.add(submission);
+        }
 
-        strategy = new SubmissionAuthorStrategy(submissionRepository);
-
-        return ResponseEntity.ok().body(strategy.getSubmissions(123L, id, submittedBy, authors, title,
-                keywords, trackId, eventId, type));
+        return ResponseEntity.ok().body(result);
     }
 }
 

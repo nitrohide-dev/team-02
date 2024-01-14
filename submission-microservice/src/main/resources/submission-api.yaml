@@ -27,13 +27,6 @@ paths:
         - submission
       parameters:
 
-        - name: id
-          description: ID of submission to return
-          schema:
-            type: string
-            format: uuid
-          in: query
-
         - name: submittedBy
           description: Filter by the id of the person who submitted the submission
           schema:
@@ -179,37 +172,6 @@ paths:
         '404':
           description: Submission not found
 
-  /submission/{submissionId}/{userId}:
-    get:
-      security:
-        - api_key: [ ]
-      tags:
-        - submission
-      summary: Find submission by ID
-      description: Returns a single submission
-      operationId: getSubmissionByIdAndUserId
-      parameters:
-        - $ref: '#/components/parameters/SubmissionId'
-        - $ref: '#/components/parameters/UserId'
-
-      responses:
-        '200':
-          description: successful operation
-          content:
-
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Submission'
-
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Submission'
-
-        '400':
-          description: Invalid ID supplied
-        '404':
-          description: Submission not found
-
     put:
       security:
         - api_key: [ ]
@@ -218,7 +180,6 @@ paths:
       summary: Partially update a submission in the system
       parameters:
         - $ref: '#/components/parameters/SubmissionId'
-        - $ref: '#/components/parameters/UserId'
       requestBody:
         content:
 
@@ -272,7 +233,6 @@ paths:
       operationId: deleteSubmission
       parameters:
         - $ref: '#/components/parameters/SubmissionId'
-        - $ref: '#/components/parameters/UserId'
       responses:
         '204':
           description: Deletion successful
@@ -379,6 +339,9 @@ components:
       enum:
         - general_chair
         - pc_chair
+        - sub_reviewer
+        - author
+        - attendee
     SubmissionStatus:
       type: string
       description: Submission Status
@@ -453,6 +416,12 @@ components:
 
         conflictsOfInterest:
           $ref: '#/components/schemas/ConflictsOfInterest'
+
+        comments:
+          type: array
+          x-field-extra-annotation: "@javax.persistence.ElementCollection(targetClass=String.class)"
+          items:
+            type: string
 
         updated:
           type: string
@@ -576,6 +545,40 @@ components:
         - recent-collaborator
         - same-institute-researcher
         - other
+    Comment:
+      type: object
+      x-class-extra-annotation: "@javax.persistence.Entity @javax.persistence.Table(name = \"comment\")"
+      properties:
+        commentID:
+          type: integer
+          format: int64
+          x-field-extra-annotation: "@javax.persistence.Id @javax.persistence.GeneratedValue(strategy = javax.persistence.GenerationType.IDENTITY)"
+          description: ID of the comment
+          example: 1
+        userID:
+          type: integer
+          format: int64
+          description: ID of the reviewer
+          example: 1
+        reviewID:
+          type: integer
+          format: int64
+          description: ID of the review
+          example: 1
+        description:
+          type: string
+          description: Comment description
+          example: "The review looks good."
+        isConfidential:
+          type: boolean
+          description: Indicates if the comment is confidential
+          example: true
+      required:
+        - userID
+        - reviewID
+        - description
+        - isConfidential
+
 
   securitySchemes:
     api_key:

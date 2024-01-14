@@ -3,8 +3,12 @@ package nl.tudelft.sem.template.submission.unit.services;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Submission;
-import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
+import nl.tudelft.sem.template.model.Track;
+import nl.tudelft.sem.template.submission.authentication.AuthManager;
+import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
+import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
+import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import nl.tudelft.sem.template.submission.services.StatisticsService;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
 import nl.tudelft.sem.template.submission.services.TrackService;
@@ -14,7 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -37,8 +41,12 @@ public class SubmissionServiceTest {
     private TrackService trackService;
 
     @Mock
-    private SubmissionValidator submissionValidator;
+    private HttpRequestService httpRequestService;
 
+    @Mock
+    private AuthManager authManager;
+
+    @Autowired
     @InjectMocks
     private SubmissionService submissionService;
 
@@ -56,10 +64,12 @@ public class SubmissionServiceTest {
         submission.setLink("http://example.com/papuh");
         submission.setAuthors(new ArrayList<>(Arrays.asList(1L, 2L)));
         submission.setTrackId(10L);
+        submission.setEventId(1L);
+        Track track = new Track();
     }
 
     @Test
-    void testAddSubmission() {
+    void testAddSubmission() throws DeadlinePassedException, IllegalAccessException {
         when(submissionRepository.save(any(Submission.class))).thenReturn(submission);
 
         ResponseEntity<String> response = submissionService.add(submission);
@@ -70,9 +80,9 @@ public class SubmissionServiceTest {
     }
 
     @Test
-    void testAddDuplicateSubmission() {
-        when(submissionRepository.findAll(any(Specification.class)))
-                .thenReturn(Collections.singletonList(new Submission()));
+    void testAddDuplicateSubmission() throws DeadlinePassedException, IllegalAccessException {
+        when(submissionRepository.findAll())
+                .thenReturn(Collections.singletonList(submission));
 
         ResponseEntity<String> response = submissionService.add(submission);
 
@@ -80,13 +90,13 @@ public class SubmissionServiceTest {
     }
 
     @Test
-    void testDeleteSubmissionNotFound() throws NotFoundException, IllegalAccessException {
+    void testDeleteSubmissionNotFound() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
         UUID id = UUID.randomUUID();
         when(submissionRepository.findById(id)).thenReturn(Optional.empty());
 
-        ResponseEntity<Void> response = submissionService.delete(id, 1L);
+        ResponseEntity<Void> response = submissionService.delete(id);
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         verify(submissionRepository, never()).delete(any(Submission.class));
     }
 
@@ -94,8 +104,13 @@ public class SubmissionServiceTest {
     void testDeleteSubmissionSuccess() throws Exception {
         UUID id = submission.getId();
         when(submissionRepository.findById(id)).thenReturn(Optional.of(submission));
+        when(authManager.getEmail()).thenReturn("example@gmail.com");
+        when(httpRequestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(1L);
+        Track track = new Track();
+        track.setSubmitDeadline("2024-02-06T23:59:59");
+        when(trackService.getTrackById(10L)).thenReturn(track);
 
-        ResponseEntity<Void> response = submissionService.delete(id, 1L);
+        ResponseEntity<Void> response = submissionService.delete(id);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(submissionRepository, times(1)).delete(submission);
@@ -107,7 +122,7 @@ public class SubmissionServiceTest {
         Submission updatedSubmission = new Submission();
         when(submissionRepository.findById(id)).thenReturn(Optional.empty());
 
-        ResponseEntity<Submission> response = submissionService.update(id, 1L, updatedSubmission);
+        ResponseEntity<Submission> response = submissionService.update(id, updatedSubmission);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         verify(submissionRepository, never()).save(any(Submission.class));
@@ -116,21 +131,27 @@ public class SubmissionServiceTest {
     @Test
     void testUpdateSubmissionSuccess() throws Exception {
         UUID id = submission.getId();
-        Submission updatedSubmission = new Submission();
-        when(submissionRepository.findById(id)).thenReturn(Optional.of(submission));
 
-        ResponseEntity<Submission> response = submissionService.update(id, 1L, updatedSubmission);
+        when(submissionRepository.findById(id)).thenReturn(Optional.of(submission));
+        when(authManager.getEmail()).thenReturn("example@gmail.com");
+        when(httpRequestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(1L);
+        Track track = new Track();
+        track.setSubmitDeadline("2024-02-06T23:59:59");
+        when(trackService.getTrackById(10L)).thenReturn(track);
+
+        Submission updatedSubmission = new Submission();
+        ResponseEntity<Submission> response = submissionService.update(id, updatedSubmission);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         verify(submissionRepository, times(1)).save(submission);
     }
 
     @Test
-    void testCheckDuplicateSubmissions_NoDuplicates() {
+    void testCheckDuplicateSubmissions_NoDuplicates() throws DeadlinePassedException, IllegalAccessException {
         Submission duplicateSubmission = new Submission();
         duplicateSubmission.setTitle("Duplicate Title");
         duplicateSubmission.setEventId(1L);
-        when(submissionRepository.findAll(any(Specification.class))).thenReturn(Collections.emptyList());
+        when(submissionRepository.findAll()).thenReturn(Collections.emptyList());
 
         boolean result = submissionService.checkDuplicateSubmissions(duplicateSubmission);
 
@@ -138,12 +159,12 @@ public class SubmissionServiceTest {
     }
 
     @Test
-    void testCheckDuplicateSubmissions_WithDuplicates() {
+    void testCheckDuplicateSubmissions_WithDuplicates() throws DeadlinePassedException, IllegalAccessException {
         Submission duplicateSubmission = new Submission();
         duplicateSubmission.setTitle("Duplicate Title");
         Submission duplicateSubmission2 = new Submission();
         duplicateSubmission2.setTitle("Duplicate Title");
-        when(submissionRepository.findAll(any(Specification.class))).thenReturn(List.of(duplicateSubmission2));
+        when(submissionRepository.findAll()).thenReturn(List.of(duplicateSubmission2));
 
         boolean result = submissionService.checkDuplicateSubmissions(duplicateSubmission);
 
@@ -151,11 +172,11 @@ public class SubmissionServiceTest {
     }
 
     @Test
-    void testGetSubmissions() {
+    void testGetSubmissions() throws DeadlinePassedException, IllegalAccessException {
         List<Submission> expectedSubmissions = Arrays.asList(new Submission(), new Submission());
-        when(submissionRepository.findAll(any(Specification.class))).thenReturn(expectedSubmissions);
+        when(submissionRepository.findAll()).thenReturn(expectedSubmissions);
 
-        ResponseEntity<List<Submission>> response = submissionService.get(null, null,
+        ResponseEntity<List<Submission>> response = submissionService.get(null,
                 null, null, null, null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -163,24 +184,11 @@ public class SubmissionServiceTest {
     }
 
     @Test
-    void testGetSubmissionsWithCriteria() {
-        Long eventId = 1L;
-        String title = "Test Paper";
-        List<Submission> expectedSubmissions = Collections.singletonList(new Submission());
-        when(submissionRepository.findAll(any(Specification.class))).thenReturn(expectedSubmissions);
-        ResponseEntity<List<Submission>> response = submissionService.get(null, null,
-                null, title, null, null, eventId, null);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(expectedSubmissions, response.getBody());
-    }
-
-    @Test
-    void testGetWithAllParametersNull() {
-        when(submissionRepository.findAll(any(Specification.class)))
+    void testGetWithAllParametersNull() throws DeadlinePassedException, IllegalAccessException {
+        when(submissionRepository.findAll())
                 .thenReturn(Collections.singletonList(submission));
 
-        ResponseEntity<List<Submission>> response = submissionService.get(null, null, null,
+        ResponseEntity<List<Submission>> response = submissionService.get(null, null,
                 null, null, null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -188,13 +196,13 @@ public class SubmissionServiceTest {
     }
 
     @Test
-    void testGetWithSpecificEventId() {
+    void testGetWithSpecificEventId() throws DeadlinePassedException, IllegalAccessException {
         //Only eventId
-        Long eventId = 123L;
-        when(submissionRepository.findAll(any(Specification.class)))
+        Long eventId = 1L;
+        when(submissionRepository.findAll())
                 .thenReturn(Collections.singletonList(submission));
 
-        ResponseEntity<List<Submission>> response = submissionService.get(null, null, null,
+        ResponseEntity<List<Submission>> response = submissionService.get(null, null,
                 null, null, null, eventId, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -202,11 +210,11 @@ public class SubmissionServiceTest {
     }
 
     @Test
-    void testGetWithTrackId() {
-        Long trackId = 1L;
-        when(submissionRepository.findAll(any(Specification.class)))
+    void testGetWithTrackId() throws DeadlinePassedException, IllegalAccessException {
+        Long trackId = 10L;
+        when(submissionRepository.findAll())
                 .thenReturn(Collections.singletonList(submission));
-        ResponseEntity<List<Submission>> response = submissionService.get(null,
+        ResponseEntity<List<Submission>> response = submissionService.get(
                 null, null, null, null, trackId, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -214,11 +222,11 @@ public class SubmissionServiceTest {
     }
 
     @Test
-    void testGetWithKeywords() {
-        List<String> keywords = Arrays.asList("Keyword1");
-        when(submissionRepository.findAll(any(Specification.class)))
+    void testGetWithKeywords() throws DeadlinePassedException, IllegalAccessException {
+        List<String> keywords = Arrays.asList("Keyword1", "Keyword2");
+        when(submissionRepository.findAll())
                 .thenReturn(Collections.singletonList(submission));
-        ResponseEntity<List<Submission>> response = submissionService.get(null, null,
+        ResponseEntity<List<Submission>> response = submissionService.get(null,
                 null, null, keywords, null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -226,23 +234,12 @@ public class SubmissionServiceTest {
     }
 
     @Test
-    void testGetWithId() {
-        UUID id = UUID.randomUUID();
-        when(submissionRepository.findAll(any(Specification.class)))
-                .thenReturn(Collections.singletonList(submission));
-        ResponseEntity<List<Submission>> response = submissionService.get(id, null,
-                null, null, null, null, null, null);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertFalse(response.getBody().isEmpty());
-    }
-
-    @Test
-    void testGetWithSubmittedBy() {
+    void testGetWithSubmittedBy() throws DeadlinePassedException, IllegalAccessException {
         Long submittedBy = 1L;
-        when(submissionRepository.findAll(any(Specification.class)))
+        submission.setSubmittedBy(1L);
+        when(submissionRepository.findAll())
                 .thenReturn(Collections.singletonList(submission));
-        ResponseEntity<List<Submission>> response = submissionService.get(null, submittedBy,
+        ResponseEntity<List<Submission>> response = submissionService.get(submittedBy,
                 null, null, null, null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -250,11 +247,11 @@ public class SubmissionServiceTest {
     }
 
     @Test
-    void testGetWithAuthors() {
+    void testGetWithAuthors() throws DeadlinePassedException, IllegalAccessException {
         List<Long> authors = Arrays.asList(1L, 2L);
-        when(submissionRepository.findAll(any(Specification.class)))
+        when(submissionRepository.findAll())
                 .thenReturn(Collections.singletonList(submission));
-        ResponseEntity<List<Submission>> response = submissionService.get(null, null,
+        ResponseEntity<List<Submission>> response = submissionService.get(null,
                 authors, null, null, null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());

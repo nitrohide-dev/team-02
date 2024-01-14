@@ -2,6 +2,7 @@ package nl.tudelft.sem.template.submission.components.strategy;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Statistics;
+import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
@@ -10,7 +11,7 @@ import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import java.util.Arrays;
 import java.util.List;
 
-public class EventStrategy implements StatisticsStrategy {
+public class GeneralChairStrategy implements StatisticsStrategy {
     private final StatisticsRepository statisticsRepository;
     private final HttpRequestService httpRequestService;
 
@@ -20,8 +21,8 @@ public class EventStrategy implements StatisticsStrategy {
      * @param statisticsRepository statistics repository
      * @param httpRequestService   http request service
      */
-    public EventStrategy(StatisticsRepository statisticsRepository,
-                         HttpRequestService httpRequestService) {
+    public GeneralChairStrategy(StatisticsRepository statisticsRepository,
+                                HttpRequestService httpRequestService) {
         this.statisticsRepository = statisticsRepository;
         this.httpRequestService = httpRequestService;
     }
@@ -38,6 +39,14 @@ public class EventStrategy implements StatisticsStrategy {
                 Track.class,
                 RequestType.USER
         );
+    }
+
+    public boolean checkDeadline(long trackId) {
+        return true;
+    }
+
+    public Submission getSubmission(long userId, Submission submission) {
+        return submission;
     }
 
     /**
