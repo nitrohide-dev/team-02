@@ -1,10 +1,20 @@
 package nl.tudelft.sem.template.submission.unit.models;
 
+import nl.tudelft.sem.template.submission.Application;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@ExtendWith({SpringExtension.class, MockitoExtension.class})
+@SpringBootTest(classes = Application.class)
+@ActiveProfiles("test")
 class RequestTypeTest {
 
     @Test
