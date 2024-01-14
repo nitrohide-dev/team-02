@@ -10,12 +10,17 @@ import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 public class StatisticsService {
     private final StatisticsRepository statisticsRepository;
+    private final TrackService trackService;
     private final HttpRequestService requestService;
 
     /**
@@ -25,8 +30,10 @@ public class StatisticsService {
      * @param requestService       http request service
      */
     public StatisticsService(StatisticsRepository statisticsRepository,
+                             TrackService trackService,
                              HttpRequestService requestService) {
         this.statisticsRepository = statisticsRepository;
+        this.trackService = trackService;
         this.requestService = requestService;
     }
 
@@ -63,11 +70,7 @@ public class StatisticsService {
 
         if (checkPermissions(trackId, userId, Role.GENERAL_CHAIR)) {
             strategy = new EventStrategy(statisticsRepository, requestService);
-            Track track = requestService.get(
-                    "track/" + trackId,
-                    Track.class,
-                    RequestType.USER
-            );
+            Track track = trackService.getTrackById(trackId);
             id = track.getEventId();
         } else {
             if (checkPermissions(trackId, userId, Role.PC_CHAIR)) {
@@ -117,30 +120,50 @@ public class StatisticsService {
     }
 
     /**
+     * Updates keywords statistics. Called after a submission is added/deleted/updated.
+     *
+     * @param statistics  statistics for a given track
+     * @param keywords    keywords in submission
+     * @param updateValue 1 if submission is added, -1 if submission is deleted
+     */
+    private void updateKeywordsCounts(Statistics statistics, List<String> keywords, long updateValue) {
+        KeywordsCounts keywordsCounts = statistics.getKeywordsCounts();
+        if (keywordsCounts == null) {
+            keywordsCounts = new KeywordsCounts();
+            keywordsCounts.setKeywords(List.of());
+            keywordsCounts.setCounts(List.of());
+        }
+        if (keywords == null) {
+            return;
+        }
+        Map<String, Long> counts = IntStream.range(0, keywordsCounts.getKeywords().size())
+                .boxed()
+                .collect(Collectors.toMap(keywordsCounts.getKeywords()::get, keywordsCounts.getCounts()::get));
+
+        for (String keyword : keywords) {
+            long count = counts.getOrDefault(keyword, 0L);
+            counts.put(keyword, count + updateValue);
+        }
+
+        keywordsCounts.setKeywords(new ArrayList<>(counts.keySet()));
+        keywordsCounts.setCounts(new ArrayList<>(counts.values()));
+        statistics.setKeywordsCounts(keywordsCounts);
+    }
+
+    /**
      * Updates statistics after new submission was made.
      *
      * @param statistics current statistics record
      * @param submission new submission.
      */
     private void addSubmission(Statistics statistics, Submission submission) {
-        SubmissionStatus status = submission.getStatus();
-        if (status.equals(SubmissionStatus.ACCEPTED)) {
-            statistics.setAccepted(statistics.getAccepted() + 1);
-        }
-        if (status.equals(SubmissionStatus.OPEN)) {
-            statistics.setOpen(statistics.getOpen() + 1);
-        }
-        if (status.equals(SubmissionStatus.REJECTED)) {
-            statistics.setRejected(statistics.getRejected() + 1);
-        }
-        if (status.equals(SubmissionStatus.UNDERREVIEW)) {
-            statistics.setUnderReview(statistics.getUnderReview() + 1);
-        }
+        changePaperCount(statistics, submission, 1L);
 
         long n = statistics.getTotalSubmissions();
-        statistics.setTotalSubmissions(statistics.getTotalSubmissions() + 1);
         statistics.setAverageNumberOfAuthors((statistics.getAverageNumberOfAuthors()
                 * n + submission.getAuthors().size()) / (n + 1));
+
+        updateKeywordsCounts(statistics, submission.getKeywords(), 1L);
         statisticsRepository.save(statistics);
     }
 
@@ -151,27 +174,50 @@ public class StatisticsService {
      * @param submission removed submission.
      */
     private void deleteSubmission(Statistics statistics, Submission submission) {
-        SubmissionStatus status = submission.getStatus();
-        if (status.equals(SubmissionStatus.ACCEPTED)) {
-            statistics.setAccepted(statistics.getAccepted() - 1);
-        }
-        if (status.equals(SubmissionStatus.OPEN)) {
-            statistics.setOpen(statistics.getOpen() - 1);
-        }
-        if (status.equals(SubmissionStatus.REJECTED)) {
-            statistics.setRejected(statistics.getRejected() - 1);
-        }
-        if (status.equals(SubmissionStatus.UNDERREVIEW)) {
-            statistics.setUnderReview(statistics.getUnderReview() - 1);
-        }
+        changePaperCount(statistics, submission, -1L);
 
         long n = statistics.getTotalSubmissions();
-        statistics.setTotalSubmissions(n - 1);
         statistics.setAverageNumberOfAuthors((statistics.getAverageNumberOfAuthors()
                 * n - submission.getAuthors().size()) / (n - 1));
+        updateKeywordsCounts(statistics, submission.getKeywords(), -1L);
         statisticsRepository.delete(statistics);
     }
 
+    /**
+     * Updates papers count per track. Called after a submission is added/deleted/updated.
+     *
+     * @param statistics  statistics for a given track
+     * @param submission  submission
+     * @param updateValue 1 if submission is added, -1 if submission is deleted
+     */
+    private void changePaperCount(Statistics statistics, Submission submission, long updateValue) {
+        SubmissionStatus status = submission.getStatus();
+        switch (status) {
+            case ACCEPTED -> {
+                statistics.setAccepted(statistics.getAccepted() + updateValue);
+            }
+            case OPEN -> {
+                statistics.setOpen(statistics.getOpen() + updateValue);
+            }
+            case REJECTED -> {
+                statistics.setRejected(statistics.getRejected() + updateValue);
+            }
+            default -> {
+                statistics.setUnderReview(statistics.getUnderReview() + updateValue);
+            }
+        }
+
+        long n = statistics.getTotalSubmissions();
+        statistics.setTotalSubmissions(n + updateValue);
+    }
+
+    /**
+     * Updates statistics after a submission was edited.
+     *
+     * @param statistics    statistics for a given track
+     * @param oldSubmission old version of submission
+     * @param newSubmission new version of submission
+     */
     private void updateSubmission(Statistics statistics, Submission oldSubmission, Submission newSubmission) {
         long oldAuthorsNumber = oldSubmission.getAuthors().size();
         long newAuthorsNumber = newSubmission.getAuthors().size();
@@ -179,6 +225,8 @@ public class StatisticsService {
         long oldTotalAuthors = statistics.getAverageNumberOfAuthors() * statistics.getTotalSubmissions();
         long newTotalAuthors = oldTotalAuthors - oldAuthorsNumber + newAuthorsNumber;
         statistics.setAverageNumberOfAuthors(newTotalAuthors / statistics.getTotalSubmissions());
+        updateKeywordsCounts(statistics, oldSubmission.getKeywords(), -1L);
+        updateKeywordsCounts(statistics, newSubmission.getKeywords(), 1L);
         statisticsRepository.save(statistics);
     }
 }
