@@ -4,8 +4,10 @@ import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Statistics;
 import nl.tudelft.sem.template.submission.Application;
 import nl.tudelft.sem.template.submission.controllers.StatsController;
+import nl.tudelft.sem.template.submission.controllers.SubmissionController;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.services.StatisticsService;
+import nl.tudelft.sem.template.submission.services.SubmissionService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,10 @@ import static org.mockito.Mockito.when;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 
 public class StatsControllerTest {
+    @MockBean
+    private SubmissionService submissionService;
+    @MockBean
+    private SubmissionController submissionController;
     @MockBean
     private StatisticsService service;
 

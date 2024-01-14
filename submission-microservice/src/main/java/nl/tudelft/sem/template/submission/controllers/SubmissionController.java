@@ -120,7 +120,7 @@ public class SubmissionController implements SubmissionApi {
      */
     @Override
     public ResponseEntity<Submission> getSubmissionById(UUID submissionId) {
-        return ResponseEntity.of(submissionRepository.findById(submissionId));
+        return submissionService.getById(submissionId);
     }
 
     /**
@@ -134,16 +134,15 @@ public class SubmissionController implements SubmissionApi {
      * @param trackId    Filter by track id (optional)
      * @param eventId    Filter by event id (optional)
      * @param type     Filter by submission type (optional)
-     * @param status   Filter by status (optional)
      * @return list of submissions. All submissions are returned if no criteria specified.
      */
     @Override
     public ResponseEntity<List<Submission>> submissionGet(UUID id, Long submittedBy, List<Long> authors,
                                                           String title, List<String> keywords, Long trackId,
-                                                          Long eventId, PaperType type, SubmissionStatus status) {
+                                                          Long eventId, PaperType type) {
 
         return submissionService.get(id, submittedBy, authors, title,
-                keywords, trackId, eventId, type, status);
+                keywords, trackId, eventId, type);
     }
 
     /**
