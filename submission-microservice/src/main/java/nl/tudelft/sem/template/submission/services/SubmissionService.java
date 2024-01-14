@@ -4,6 +4,7 @@ import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
+import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.components.chain.DeadlineValidator;
@@ -19,10 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class SubmissionService {
@@ -68,6 +66,12 @@ public class SubmissionService {
                     "A submission with such a title already exists in this event!");
         }
 
+        String paperType = checkPaperType(submission);
+        if (paperType != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    paperType);
+        }
+
         submission.setId(UUID.randomUUID());
         //  submission.setSubmittedBy(userId);
         submission.setCreated(LocalDateTime.now());
@@ -85,7 +89,7 @@ public class SubmissionService {
         submissionRepository.save(submission);
         return ResponseEntity.status(HttpStatus.CREATED).body("""
                 Submission added successfully!
-                Here is the id fCreatedor your new submission:\s""" + submission.getId());
+                Here is the id for your new submission:\s""" + submission.getId());
     }
 
     /**
@@ -212,6 +216,23 @@ public class SubmissionService {
         }
 
         return ResponseEntity.ok().body(result);
+    }
+
+    /**
+     * Checks whether the paper type submitted is accepted at the stated track.
+     *
+     * @param submission paper submission
+     * @return returns null if there's no conflict, otherwise returns message specifying required type
+     */
+    public String checkPaperType(Submission submission) {
+        Track track = trackService.getTrackById(submission.getTrackId());
+        PaperType paperType = track.getPaperType();
+        String incorrectType = "You submitted a paper of incorrect type. The correct type is " + paperType.toString();
+        if (paperType.equals(submission.getType())) {
+            return null;
+        } else {
+            return incorrectType;
+        }
     }
 }
 

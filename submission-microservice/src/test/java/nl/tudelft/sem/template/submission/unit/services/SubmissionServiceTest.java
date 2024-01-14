@@ -1,12 +1,15 @@
 package nl.tudelft.sem.template.submission.unit.services;
 
-
 import javassist.NotFoundException;
+import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.models.RequestType;
+import nl.tudelft.sem.template.model.Track;
+import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
+import nl.tudelft.sem.template.submission.components.strategy.SubmissionNotAuthorStrategy;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import nl.tudelft.sem.template.submission.services.StatisticsService;
@@ -17,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -64,16 +68,19 @@ public class SubmissionServiceTest {
         submission.setLink("http://example.com/papuh");
         submission.setAuthors(new ArrayList<>(Arrays.asList(1L, 2L)));
         submission.setTrackId(10L);
+        submission.setType(PaperType.SHORT_PAPER);
         submission.setEventId(1L);
-        Track track = new Track();
     }
 
     @Test
     void testAddSubmission() throws DeadlinePassedException, IllegalAccessException {
+        //mocks the paperType
+        Track mockTrack = mock(Track.class);
+        when(mockTrack.getPaperType()).thenReturn(submission.getType());
+        when(trackService.getTrackById(any(Long.class))).thenReturn(mockTrack);
+
         when(submissionRepository.save(any(Submission.class))).thenReturn(submission);
-
         ResponseEntity<String> response = submissionService.add(submission);
-
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertTrue(response.getBody().contains(submission.getId().toString()));
         verify(submissionRepository, times(1)).save(any(Submission.class));
@@ -258,4 +265,22 @@ public class SubmissionServiceTest {
         assertFalse(response.getBody().isEmpty());
     }
 
+    @Test
+    void checkPaperTypeCorrect() {
+        Track mockTrack = mock(Track.class);
+        when(mockTrack.getPaperType()).thenReturn(submission.getType());
+        when(trackService.getTrackById(any(Long.class))).thenReturn(mockTrack);
+        String result = submissionService.checkPaperType(submission);
+        assertEquals(result, null);
+    }
+
+    @Test
+    void checkPaperTypeIncorrect() {
+        Track mockTrack = mock(Track.class);
+        when(mockTrack.getPaperType()).thenReturn(PaperType.FULL_PAPER);
+        when(trackService.getTrackById(any(Long.class))).thenReturn(mockTrack);
+        String result = submissionService.checkPaperType(submission);
+        assertEquals(result, "You submitted a paper of incorrect type. The correct type is "
+                + PaperType.FULL_PAPER.toString());
+    }
 }
