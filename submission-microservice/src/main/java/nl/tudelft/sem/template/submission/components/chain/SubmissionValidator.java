@@ -1,9 +1,9 @@
 package nl.tudelft.sem.template.submission.components.chain;
 
-import javassist.NotFoundException;
+import nl.tudelft.sem.template.model.Submission;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-
-import java.util.UUID;
 
 @Component
 public abstract class SubmissionValidator implements Validator {
@@ -17,10 +17,10 @@ public abstract class SubmissionValidator implements Validator {
      * Runs check on the next object in chain or ends traversing if we're in
      * last object in chain.
      */
-    protected boolean checkNext(UUID submissionId, long userId) throws IllegalAccessException, NotFoundException {
+    protected ResponseEntity<?> checkNext(Submission submission, Long userId) {
         if (next == null) {
-            return true;
+            return ResponseEntity.status(HttpStatus.OK).body(userId);
         }
-        return next.handle(submissionId, userId);
+        return next.handle(submission, userId);
     }
 }
