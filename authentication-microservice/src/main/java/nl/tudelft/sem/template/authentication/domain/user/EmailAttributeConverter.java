@@ -7,17 +7,16 @@ import javax.persistence.Converter;
  * JPA Converter for the NetID value object.
  */
 @Converter
-public class NetIdAttributeConverter implements AttributeConverter<NetId, String> {
+public class EmailAttributeConverter implements AttributeConverter<Email, String> {
 
     @Override
-    public String convertToDatabaseColumn(NetId attribute) {
+    public String convertToDatabaseColumn(Email attribute) {
         return attribute.toString();
     }
 
     @Override
-    public NetId convertToEntityAttribute(String dbData) {
-        return new NetId(dbData);
+    public Email convertToEntityAttribute(String dbData) {
+        return new Email(dbData);
     }
 
 }
-

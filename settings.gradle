@@ -1,3 +1,4 @@
 rootProject.name = 'template'
 
 include 'submission-microservice'
+include 'authentication-microservice'

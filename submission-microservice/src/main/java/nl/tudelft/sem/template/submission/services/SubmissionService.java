@@ -4,7 +4,8 @@ import nl.tudelft.sem.template.model.PaperType;
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
-import nl.tudelft.sem.template.submission.components.chain.AuthorizationValidator;
+import nl.tudelft.sem.template.submission.authentication.AuthManager;
+import nl.tudelft.sem.template.submission.components.chain.*;
 import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
 import nl.tudelft.sem.template.submission.components.strategy.SubmissionAuthorStrategy;
 import nl.tudelft.sem.template.submission.components.strategy.SubmissionGetStrategy;
@@ -30,8 +31,7 @@ public class SubmissionService {
     private final StatisticsService statisticsService;
     private final TrackService trackService;
     private final HttpRequestService httpRequestService;
-    private final SubmissionValidator submissionValidator;
-    private final SubmissionNotAuthorStrategy submissionNotAuthorStrategy;
+    private final AuthManager authManager;
 
     /**
      * Submission Service constructor.
@@ -43,20 +43,12 @@ public class SubmissionService {
                              StatisticsService statisticsService,
                              TrackService trackService,
                              HttpRequestService httpRequestService,
-                             SubmissionValidator submissionValidator,
-                             SubmissionNotAuthorStrategy submissionNotAuthorStrategy) {
+                             AuthManager authManager) {
         this.submissionRepository = submissionRepository;
         this.statisticsService = statisticsService;
         this.trackService = trackService;
         this.httpRequestService = httpRequestService;
-        this.submissionValidator = submissionValidator;
-        this.submissionNotAuthorStrategy = submissionNotAuthorStrategy;
-    }
-
-    private void runChain(UUID submissionId, long userId) throws IllegalAccessException, NotFoundException {
-        submissionValidator.setNext(new AuthorizationValidator(submissionRepository));
-        // submissionValidator.setNext(new DeadlineValidator(submissionRepository));
-        submissionValidator.handle(submissionId, userId);
+        this.authManager = authManager;
     }
 
     /**
@@ -70,10 +62,30 @@ public class SubmissionService {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(
                     "A submission with such a title already exists in this event!");
         }
+        /*
+        Validator deadlineValidator = new DeadlineValidator(httpRequestService);
+        deadlineValidator.setNext(new DuplicateValidator(this));
+
+        Validator handler = new UserValidator(httpRequestService, authManager);
+        handler.setNext(deadlineValidator);
+
+        ResponseEntity<Submission> entity = ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+        entity.getStatusCode();
+
+        ResponseEntity<?> answer = handler.handle(submission, null);
+
+        Long userId;
+
+        if (answer.getStatusCode() == HttpStatus.OK) {
+            userId = (Long) answer.getBody();
+        } else {
+            return (ResponseEntity<String>) answer;
+        }*/
 
         //if (!trackService.checkSubmissionDeadline(submission.getTrackId()))
         //    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         //}
+
         //        if (!trackService.requiredFields(submission.getTitle(),
         //                submission.getAuthors(),
         //                submission.getAbstract(),
@@ -83,6 +95,7 @@ public class SubmissionService {
         //        }
 
         submission.setId(UUID.randomUUID());
+        //submission.setSubmittedBy(userId);
         submission.setCreated(LocalDateTime.now());
         submission.setUpdated(submission.getCreated());
         submission.setStatus(SubmissionStatus.OPEN);
@@ -110,7 +123,6 @@ public class SubmissionService {
     public ResponseEntity<Void> delete(@PathVariable("id") UUID submissionId,
                                        @PathVariable("userId") long userId) throws NotFoundException,
             IllegalAccessException {
-        runChain(submissionId, userId);
         Optional<Submission> deleted = submissionRepository.findById(submissionId);
         if (deleted.isEmpty()) {
             return ResponseEntity.badRequest().build();
@@ -133,7 +145,6 @@ public class SubmissionService {
                                              @PathVariable("userId") long userId,
                                              Submission updatedSubmission) throws NotFoundException,
             IllegalAccessException {
-        runChain(submissionId, userId);
         Optional<Submission> optional = submissionRepository.findById(submissionId);
         if (optional.isEmpty()) {
             return ResponseEntity.badRequest().build();

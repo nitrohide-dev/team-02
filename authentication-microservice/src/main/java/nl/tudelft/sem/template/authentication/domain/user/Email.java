@@ -6,16 +6,16 @@ import lombok.EqualsAndHashCode;
  * A DDD value object representing a NetID in our domain.
  */
 @EqualsAndHashCode
-public class NetId {
-    private final transient String netIdValue;
+public class Email {
+    private final transient String emailValue;
 
-    public NetId(String netId) {
+    public Email(String email) {
         // validate NetID
-        this.netIdValue = netId;
+        this.emailValue = email;
     }
 
     @Override
     public String toString() {
-        return netIdValue;
+        return emailValue;
     }
 }
