@@ -75,7 +75,7 @@ test {
 	useJUnitPlatform()
 	jacoco {
 		enabled = true
-		includes = ['nl.tudelft.sem.template.*']
+		includes = ['nl.tudelft.sem.template.submission.*']
 		excludes = ['nl.tudelft.sem.template.models', 'nl.tudelft.sem.template.api']
 	}
 }
@@ -94,7 +94,7 @@ jacocoTestCoverageVerification() {
 		rule {
 			enabled = true
 			element = 'CLASS'
-			includes = ['nl.tudelft.sem.template.*']
+			includes = ['nl.tudelft.sem.template.submission.*']
 
 			limit {
 				counter = 'BRANCH'
@@ -172,7 +172,7 @@ pitest {
 	//adds dependency to org.pitest:pitest-junit5-plugin and sets "testPlugin" to "junit5"
 	junit5PluginVersion = '0.12'
 
-	targetClasses = ['nl.tudelft.sem.template.*']  //by default "${project.group}.*"
+	targetClasses = ['nl.tudelft.sem.template.submission.*']  //by default "${project.group}.*"
 	pitestVersion = '1.5.1' //not needed when a default PIT version should be used
 	threads = 4
 	outputFormats = ['XML', 'HTML']
