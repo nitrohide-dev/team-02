@@ -6,6 +6,9 @@ import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
 import nl.tudelft.sem.template.submission.components.chain.AuthorizationValidator;
 import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
+import nl.tudelft.sem.template.submission.components.strategy.SubmissionAuthorStrategy;
+import nl.tudelft.sem.template.submission.components.strategy.SubmissionGetStrategy;
+import nl.tudelft.sem.template.submission.components.strategy.SubmissionNotAuthorStrategy;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +31,7 @@ public class SubmissionService {
     private final TrackService trackService;
     private final HttpRequestService httpRequestService;
     private final SubmissionValidator submissionValidator;
+    private final SubmissionNotAuthorStrategy submissionNotAuthorStrategy;
 
     /**
      * Submission Service constructor.
@@ -39,12 +43,14 @@ public class SubmissionService {
                              StatisticsService statisticsService,
                              TrackService trackService,
                              HttpRequestService httpRequestService,
-                             SubmissionValidator submissionValidator) {
+                             SubmissionValidator submissionValidator,
+                             SubmissionNotAuthorStrategy submissionNotAuthorStrategy) {
         this.submissionRepository = submissionRepository;
         this.statisticsService = statisticsService;
         this.trackService = trackService;
         this.httpRequestService = httpRequestService;
         this.submissionValidator = submissionValidator;
+        this.submissionNotAuthorStrategy = submissionNotAuthorStrategy;
     }
 
     private void runChain(UUID submissionId, long userId) throws IllegalAccessException, NotFoundException {
@@ -161,74 +167,51 @@ public class SubmissionService {
 
         List<Submission> submissions = get(null, null, null,
                 submission.getTitle(), null, null, submission.getEventId(),
-                null, null).getBody();
+                null).getBody();
         return submissions.isEmpty();
+    }
+
+    /**
+     * Returns submission with a provided id.
+     *
+     * @param submissionId ID of submission to return (required)
+     * @return submission if it is found for a given id, error otherwise
+     */
+    public ResponseEntity<Submission> getById(UUID submissionId) {
+
+        SubmissionGetStrategy strategy;
+
+        //imagine that I am doing some proper authentication checks here
+
+        strategy = new SubmissionAuthorStrategy(submissionRepository);
+
+        return strategy.getSubmission(123L, submissionId);
     }
 
     /**
      * Returns list of submissions matching search criteria.
      *
-     * @param eventId    Filter by event id (optional)
-     * @param trackId    Filter by track id (optional)
+     * @param id        Filter by submission id (optional)
+     * @param submittedBy Filter by person who submitted (optional)
      * @param authors   Filter by author id (optional)
-     * @param keywords Filters by keywords (optional)
-     * @param status   Filter by status (optional)
      * @param title     Filter by submission name (optional)
+     * @param keywords Filters by keywords (optional)
+     * @param trackId    Filter by track id (optional)
+     * @param eventId    Filter by event id (optional)
      * @param type     Filter by submission type (optional)
      * @return list of submissions. All submissions are returned if no criteria specified.
      */
     public ResponseEntity<List<Submission>> get(UUID id, Long submittedBy, List<Long> authors,
                                                 String title, List<String> keywords, Long trackId,
-                                                Long eventId, PaperType type, SubmissionStatus status) {
+                                                Long eventId, PaperType type) {
+        SubmissionGetStrategy strategy;
 
-        Specification<Submission> specification = Specification.where(null);
+        //imagine that I am doing some proper authentication checks here
 
-        if (id != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.equal(root.get("id"), id));
-        }
+        strategy = new SubmissionAuthorStrategy(submissionRepository);
 
-        if (submittedBy != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.equal(root.get("submittedBy"), submittedBy));
-        }
-
-        if (authors != null && !authors.isEmpty()) {
-            specification = specification.and((root, query, builder) ->
-                    root.get("authors").in(authors));
-        }
-
-        if (title != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.like(builder.lower(root.get("title")), title.toLowerCase()));
-        }
-
-        if (keywords != null && !keywords.isEmpty()) {
-            specification = specification.and((root, query, builder) ->
-                    root.get("keywords").in(keywords));
-        }
-
-        if (trackId != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.equal(root.get("trackId"), trackId));
-        }
-
-        if (eventId != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.equal(root.get("eventId"), eventId));
-        }
-
-        if (type != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.equal(root.get("type"), type));
-        }
-
-        if (status != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.equal(root.get("status"), status));
-        }
-
-        return ResponseEntity.ok().body(submissionRepository.findAll(specification));
+        return ResponseEntity.ok().body(strategy.getSubmissions(123L, id, submittedBy, authors, title,
+                keywords, trackId, eventId, type));
     }
 }
 
