@@ -156,7 +156,7 @@ public class SubmissionServiceTest {
         when(submissionRepository.findAll(any(Specification.class))).thenReturn(expectedSubmissions);
 
         ResponseEntity<List<Submission>> response = submissionService.get(null, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(expectedSubmissions, response.getBody());
@@ -169,7 +169,7 @@ public class SubmissionServiceTest {
         List<Submission> expectedSubmissions = Collections.singletonList(new Submission());
         when(submissionRepository.findAll(any(Specification.class))).thenReturn(expectedSubmissions);
         ResponseEntity<List<Submission>> response = submissionService.get(null, null,
-                null, title, null, null, eventId, null, null);
+                null, title, null, null, eventId, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(expectedSubmissions, response.getBody());
@@ -181,7 +181,7 @@ public class SubmissionServiceTest {
                 .thenReturn(Collections.singletonList(submission));
 
         ResponseEntity<List<Submission>> response = submissionService.get(null, null, null,
-                null, null, null, null, null, null);
+                null, null, null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertFalse(response.getBody().isEmpty());
@@ -195,7 +195,7 @@ public class SubmissionServiceTest {
                 .thenReturn(Collections.singletonList(submission));
 
         ResponseEntity<List<Submission>> response = submissionService.get(null, null, null,
-                null, null, null, eventId, null, null);
+                null, null, null, eventId, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertFalse(response.getBody().isEmpty());
@@ -207,7 +207,7 @@ public class SubmissionServiceTest {
         when(submissionRepository.findAll(any(Specification.class)))
                 .thenReturn(Collections.singletonList(submission));
         ResponseEntity<List<Submission>> response = submissionService.get(null,
-                null, null, null, null, trackId, null, null, null);
+                null, null, null, null, trackId, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertFalse(response.getBody().isEmpty());
@@ -219,7 +219,7 @@ public class SubmissionServiceTest {
         when(submissionRepository.findAll(any(Specification.class)))
                 .thenReturn(Collections.singletonList(submission));
         ResponseEntity<List<Submission>> response = submissionService.get(null, null,
-                null, null, keywords, null, null, null, null);
+                null, null, keywords, null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertFalse(response.getBody().isEmpty());
@@ -231,7 +231,7 @@ public class SubmissionServiceTest {
         when(submissionRepository.findAll(any(Specification.class)))
                 .thenReturn(Collections.singletonList(submission));
         ResponseEntity<List<Submission>> response = submissionService.get(id, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertFalse(response.getBody().isEmpty());
@@ -243,7 +243,7 @@ public class SubmissionServiceTest {
         when(submissionRepository.findAll(any(Specification.class)))
                 .thenReturn(Collections.singletonList(submission));
         ResponseEntity<List<Submission>> response = submissionService.get(null, submittedBy,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertFalse(response.getBody().isEmpty());
@@ -255,7 +255,7 @@ public class SubmissionServiceTest {
         when(submissionRepository.findAll(any(Specification.class)))
                 .thenReturn(Collections.singletonList(submission));
         ResponseEntity<List<Submission>> response = submissionService.get(null, null,
-                authors, null, null, null, null, null, null);
+                authors, null, null, null, null, null);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertFalse(response.getBody().isEmpty());
