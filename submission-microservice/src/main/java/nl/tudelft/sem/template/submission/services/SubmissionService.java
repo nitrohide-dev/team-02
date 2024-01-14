@@ -4,6 +4,7 @@ import nl.tudelft.sem.template.model.PaperType;
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
+import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
 import nl.tudelft.sem.template.submission.components.chain.*;
 import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
@@ -20,10 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class SubmissionService {
@@ -62,6 +60,13 @@ public class SubmissionService {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(
                     "A submission with such a title already exists in this event!");
         }
+
+//        // checks for correct paper type
+//        String paperType = checkPaperType(submission);
+//        if(paperType != null){
+//            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+//                    paperType);
+//        }
         /*
         Validator deadlineValidator = new DeadlineValidator(httpRequestService);
         deadlineValidator.setNext(new DuplicateValidator(this));
@@ -223,6 +228,22 @@ public class SubmissionService {
 
         return ResponseEntity.ok().body(strategy.getSubmissions(123L, id, submittedBy, authors, title,
                 keywords, trackId, eventId, type));
+    }
+
+    /**
+     * Checks whether the paper type submitted is accepted at the stated track.
+     *
+     * @param submission paper submission
+     * @return returns null if there's no conflict, otherwise returns message specifying required type
+     */
+    public String checkPaperType(Submission submission){
+        Track track = trackService.getTrackById(submission.getTrackId());
+        PaperType paperType = track.getPaperType();
+        String incorrectType = "You submitted a paper of incorrect type. The correct type is "+paperType.toString();
+        if (paperType.equals(submission.getType()))
+            { return null;}
+        else
+            {return incorrectType;}
     }
 }
 

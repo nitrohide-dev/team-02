@@ -56,12 +56,13 @@ public class SubmissionServiceTest {
         submission.setLink("http://example.com/papuh");
         submission.setAuthors(new ArrayList<>(Arrays.asList(1L, 2L)));
         submission.setTrackId(10L);
+
+
     }
 
     @Test
     void testAddSubmission() {
         when(submissionRepository.save(any(Submission.class))).thenReturn(submission);
-
         ResponseEntity<String> response = submissionService.add(submission);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
