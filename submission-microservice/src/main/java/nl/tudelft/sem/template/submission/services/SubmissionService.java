@@ -130,7 +130,7 @@ public class SubmissionService {
         runChain(submissionId, userId);
         Optional<Submission> optional = submissionRepository.findById(submissionId);
         if (optional.isEmpty()) {
-            ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().build();
         }
 
         Submission submission = optional.get();
