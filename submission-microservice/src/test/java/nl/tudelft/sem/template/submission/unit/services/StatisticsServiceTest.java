@@ -8,6 +8,7 @@ import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import nl.tudelft.sem.template.submission.services.StatisticsService;
+import nl.tudelft.sem.template.submission.services.TrackService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ public class StatisticsServiceTest {
 
     @MockBean
     private HttpRequestService requestService;
+
+    @MockBean
+    private TrackService trackService;
 
     @Autowired
     @InjectMocks
@@ -80,6 +84,7 @@ public class StatisticsServiceTest {
         submission.setEventId(0L);
         submission.setAuthors(List.of(0L, 1L));
         submission.setStatus(SubmissionStatus.ACCEPTED);
+        submission.setKeywords(List.of("keyword1", "keyword2"));
     }
 
     private void statsSetup() {
@@ -90,12 +95,28 @@ public class StatisticsServiceTest {
         trackStats1.setRejected(7L);
         trackStats1.setAverageNumberOfAuthors(2L);
 
+        KeywordsCounts keywordsCounts1 = new KeywordsCounts();
+        keywordsCounts1.setKeywords(List.of("keyword1", "keyword2"));
+        keywordsCounts1.setCounts(List.of(10L, 5L));
+        trackStats1.setKeywordsCounts(keywordsCounts1);
+
         trackStats2 = new Statistics();
         trackStats2.setId(1L);
         trackStats2.setTotalSubmissions(20L);
         trackStats2.setAccepted(12L);
         trackStats2.setRejected(8L);
         trackStats2.setAverageNumberOfAuthors(4L);
+
+        KeywordsCounts keywordsCounts2 = new KeywordsCounts();
+        keywordsCounts2.setKeywords(List.of("keyword1", "keyword2", "keyword3"));
+        keywordsCounts2.setCounts(List.of(5L, 5L, 10L));
+        trackStats2.setKeywordsCounts(keywordsCounts2);
+    }
+
+    private void setupTrackService() {
+        when(trackService.getTrackById(0L)).thenReturn(track1);
+        when(trackService.getTrackById(1L)).thenReturn(track2);
+        when(trackService.getTrackById(2L)).thenReturn(track3);
     }
 
     private void setupRequestService() {
@@ -103,12 +124,6 @@ public class StatisticsServiceTest {
                 .thenReturn(List.of(track1, track2));
         when(requestService.getList("track/" + "eventId=1", Track.class, RequestType.USER))
                 .thenReturn(List.of());
-        when(requestService.get("track/0", Track.class, RequestType.USER))
-                .thenReturn(track1);
-        when(requestService.get("track/1", Track.class, RequestType.USER))
-                .thenReturn(track2);
-        when(requestService.get("track/2", Track.class, RequestType.USER))
-                .thenReturn(track3);
 
         when(requestService.getList("attendee/0", Chair.class, RequestType.USER))
                 .thenReturn(List.of(generalChair, pcChair1));
@@ -121,6 +136,7 @@ public class StatisticsServiceTest {
     @BeforeEach
     void setup() {
         statsSetup();
+        setupTrackService();
         setupRequestService();
 
         when(repository.findById(0L)).thenReturn(Optional.ofNullable(trackStats1));
@@ -166,11 +182,16 @@ public class StatisticsServiceTest {
     void testAddSubmission() {
         service.updateStatistics(null, submission);
         Statistics saved = new Statistics();
+        KeywordsCounts keywordsCounts = new KeywordsCounts();
+        keywordsCounts.setKeywords(List.of("keyword1", "keyword2"));
+        keywordsCounts.setCounts(List.of(11L, 6L));
+
         saved.setId(0L);
         saved.setTotalSubmissions(11L);
         saved.setAccepted(4L);
         saved.setRejected(7L);
         saved.setAverageNumberOfAuthors(2L);
+        saved.setKeywordsCounts(keywordsCounts);
         verify(repository, times(1)).save(saved);
     }
 
@@ -178,11 +199,16 @@ public class StatisticsServiceTest {
     void testDeleteSubmission() {
         service.updateStatistics(submission, null);
         Statistics saved = new Statistics();
+        KeywordsCounts keywordsCounts = new KeywordsCounts();
+        keywordsCounts.setKeywords(List.of("keyword1", "keyword2"));
+        keywordsCounts.setCounts(List.of(9L, 4L));
+
         saved.setId(0L);
         saved.setTotalSubmissions(9L);
         saved.setAccepted(2L);
         saved.setRejected(7L);
         saved.setAverageNumberOfAuthors(2L);
+        saved.setKeywordsCounts(keywordsCounts);
         verify(repository, times(1)).delete(saved);
     }
 
@@ -193,6 +219,7 @@ public class StatisticsServiceTest {
         updated.setTrackId(0L);
         updated.setEventId(0L);
         updated.setAuthors(List.of(0L, 1L, 2L, 3L));
+        updated.setKeywords(List.of("keyword1", "keyword2"));
         updated.setStatus(SubmissionStatus.ACCEPTED);
 
         service.updateStatistics(submission, updated);
@@ -202,6 +229,10 @@ public class StatisticsServiceTest {
         saved.setAccepted(3L);
         saved.setRejected(7L);
         saved.setAverageNumberOfAuthors(2L);
+        KeywordsCounts keywordsCounts = new KeywordsCounts();
+        keywordsCounts.setKeywords(List.of("keyword1", "keyword2"));
+        keywordsCounts.setCounts(List.of(10L, 5L));
+        saved.setKeywordsCounts(keywordsCounts);
         verify(repository, times(1)).save(saved);
     }
 }

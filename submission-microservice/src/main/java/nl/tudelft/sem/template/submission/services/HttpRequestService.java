@@ -8,11 +8,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Service
@@ -23,7 +21,6 @@ public class HttpRequestService {
 
     private final String userMicroserviceUrl = "http://localhost:8085/";
     private final String reviewMicroserviceUrl = "http://localhost:8082/";
-    private final String submissionMicroserviceUrl = "http://localhost:8084/";
 
     public class BadResponseException extends RuntimeException {
         // Custom exception class for representing bad responses
@@ -53,9 +50,9 @@ public class HttpRequestService {
     /**
      * get list request method.
      *
-     * @param url where to send the get request to
+     * @param url          where to send the get request to
      * @param responseType what type is the object that we are trying to receive
-     * @param requestType where to send the request to
+     * @param requestType  where to send the request to
      * @return object which is the result of the get query
      */
     public <T> T get(String url, Class<T> responseType, RequestType requestType) {
@@ -82,9 +79,9 @@ public class HttpRequestService {
     /**
      * get list request method.
      *
-     * @param url where to send the get request to
+     * @param url          where to send the get request to
      * @param responseType what type is the object that we are trying to receive
-     * @param requestType where to send the request to
+     * @param requestType  where to send the request to
      * @return list of objects which is the result of the get query
      */
     public <T> List<T> getList(String url, Class<T> responseType, RequestType requestType) {
