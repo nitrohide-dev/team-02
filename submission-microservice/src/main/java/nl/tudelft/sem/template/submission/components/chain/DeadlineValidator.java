@@ -36,8 +36,9 @@ public class DeadlineValidator extends SubmissionValidator {
 
         Track track = httpRequestService.get("track/" + submission.getTrackId(), Track.class, RequestType.USER);
 
-        if(LocalDateTime.parse(track.getSubmitDeadline()).isAfter(LocalDateTime.now())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("The deadline for submitting submissions to this track has passed.");
+        if (LocalDateTime.parse(track.getSubmitDeadline()).isAfter(LocalDateTime.now())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("The deadline for submitting submissions to this track has passed.");
         }
 
         return super.checkNext(submission, userId);

@@ -57,7 +57,7 @@ public class SubmissionService {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(
                     "A submission with such a title already exists in this event!");
         }
-
+        /*
         Validator deadlineValidator = new DeadlineValidator(httpRequestService);
         deadlineValidator.setNext(new DuplicateValidator(this));
 
@@ -77,6 +77,8 @@ public class SubmissionService {
             return (ResponseEntity<String>) answer;
         }
 
+         */
+
         //if (!trackService.checkSubmissionDeadline(submission.getTrackId()))
         //    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         //}
@@ -90,7 +92,7 @@ public class SubmissionService {
         //        }
 
         submission.setId(UUID.randomUUID());
-        submission.setSubmittedBy(userId);
+        //submission.setSubmittedBy(userId);
         submission.setCreated(LocalDateTime.now());
         submission.setUpdated(submission.getCreated());
         submission.setStatus(SubmissionStatus.OPEN);
