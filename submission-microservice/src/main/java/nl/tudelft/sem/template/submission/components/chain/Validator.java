@@ -9,6 +9,9 @@ import org.springframework.stereotype.Component;
 public interface Validator {
     void setNext(Validator handler);
 
-    SubmissionStrategy handle(SubmissionStrategy strategy, Long userId, Submission submission, HttpMethod requestType)
+    SubmissionStrategy handle(SubmissionStrategy strategy,
+                              Long userId, Long trackId,
+                              Submission submission,
+                              HttpMethod requestType)
             throws DeadlinePassedException, IllegalAccessException;
 }

@@ -4,6 +4,7 @@ package nl.tudelft.sem.template.submission.controllers;
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.api.StatsApi;
 import nl.tudelft.sem.template.model.Statistics;
+import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.services.StatisticsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,14 +28,17 @@ public class StatsController implements StatsApi {
     }
 
     @Override
-    public ResponseEntity<Statistics> eventStatisticsGet(Long eventId, Long userId) {
+    public ResponseEntity<Statistics> eventStatisticsGet(Long eventId) {
         try {
-            Statistics output = statisticsService.getStatistics(userId, eventId);
+            Statistics output = statisticsService.getStatistics(eventId);
             return ResponseEntity.of(Optional.of(output));
         } catch (IllegalAccessException e) {
             return ResponseEntity.status(401).build();
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).build();
+        } catch (DeadlinePassedException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
         }
     }
 
@@ -44,14 +48,17 @@ public class StatsController implements StatsApi {
     }
 
     @Override
-    public ResponseEntity<Statistics> trackStatisticsGet(Long trackId, Long userId) {
+    public ResponseEntity<Statistics> trackStatisticsGet(Long trackId) {
         try {
-            Statistics output = statisticsService.getStatistics(userId, trackId);
+            Statistics output = statisticsService.getStatistics(trackId);
             return ResponseEntity.of(Optional.of(output));
         } catch (IllegalAccessException e) {
             return ResponseEntity.status(401).build();
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).build();
+        } catch (DeadlinePassedException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
         }
     }
 }

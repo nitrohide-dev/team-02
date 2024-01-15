@@ -2,12 +2,16 @@ package nl.tudelft.sem.template.submission.services;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.*;
-import nl.tudelft.sem.template.submission.components.strategy.GeneralChairStrategy;
-import nl.tudelft.sem.template.submission.components.strategy.PcChairStrategy;
-import nl.tudelft.sem.template.submission.components.strategy.StatisticsStrategy;
+import nl.tudelft.sem.template.submission.authentication.AuthManager;
+import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
+import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
+import nl.tudelft.sem.template.submission.components.chain.UserValidator;
+import nl.tudelft.sem.template.submission.components.strategy.SubmissionStrategy;
 import nl.tudelft.sem.template.submission.models.Attendee;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
+import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,9 +23,12 @@ import java.util.stream.IntStream;
 
 @Service
 public class StatisticsService {
+    private final SubmissionRepository submissionRepository;
     private final StatisticsRepository statisticsRepository;
     private final TrackService trackService;
     private final HttpRequestService requestService;
+    private final AuthManager authManager;
+    private SubmissionValidator handler;
 
     /**
      * StatisticsService constructor.
@@ -29,12 +36,16 @@ public class StatisticsService {
      * @param statisticsRepository statistics repository
      * @param requestService       http request service
      */
-    public StatisticsService(StatisticsRepository statisticsRepository,
+    public StatisticsService(SubmissionRepository submissionRepository,
+                             StatisticsRepository statisticsRepository,
                              TrackService trackService,
-                             HttpRequestService requestService) {
+                             HttpRequestService requestService,
+                             AuthManager authManager) {
+        this.submissionRepository = submissionRepository;
         this.statisticsRepository = statisticsRepository;
         this.trackService = trackService;
         this.requestService = requestService;
+        this.authManager = authManager;
     }
 
     /**
@@ -55,33 +66,25 @@ public class StatisticsService {
         return false;
     }
 
+    private void setupChain() {
+        handler = new UserValidator(submissionRepository, statisticsRepository,
+                requestService, trackService, authManager);
+    }
+
     /**
      * Returns statistics for a given track (for a PC chair) and event (for general chair).
      *
-     * @param userId  user id
      * @param trackId track id
      * @return statistics for track / event
      * @throws IllegalAccessException if user is not PC / general chair for the given track / event
      * @throws NotFoundException      if statistics for a given track / event was not collected yet
      */
-    public Statistics getStatistics(long userId, long trackId) throws IllegalAccessException, NotFoundException {
-        StatisticsStrategy strategy;
-        long id;
+    public Statistics getStatistics(long trackId) throws IllegalAccessException,
+            NotFoundException, DeadlinePassedException {
+        setupChain();
+        SubmissionStrategy strategy = handler.handle(null, null, trackId, null, HttpMethod.GET);
 
-        if (checkPermissions(trackId, userId, Role.GENERAL_CHAIR)) {
-            strategy = new GeneralChairStrategy(statisticsRepository, requestService);
-            Track track = trackService.getTrackById(trackId);
-            id = track.getEventId();
-        } else {
-            if (checkPermissions(trackId, userId, Role.PC_CHAIR)) {
-                strategy = new PcChairStrategy(statisticsRepository);
-                id = trackId;
-            } else {
-                throw new IllegalAccessException("User has not enough permissions to get statistics.");
-            }
-        }
-
-        return strategy.getStatistics(id);
+        return strategy.getStatistics(trackService.getTrackById(trackId));
     }
 
     /**

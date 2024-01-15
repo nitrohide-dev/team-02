@@ -3,6 +3,8 @@ package nl.tudelft.sem.template.submission.unit.services;
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.*;
 import nl.tudelft.sem.template.submission.Application;
+import nl.tudelft.sem.template.submission.authentication.AuthManager;
+import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
 import nl.tudelft.sem.template.submission.models.Attendee;
 import nl.tudelft.sem.template.submission.models.RequestType;
@@ -50,6 +52,9 @@ public class StatisticsServiceTest {
 
     @MockBean
     private TrackService trackService;
+
+    @MockBean
+    private AuthManager authManager;
 
     @Autowired
     @InjectMocks
@@ -145,6 +150,8 @@ public class StatisticsServiceTest {
         setupTrackService();
         setupRequestService();
 
+        when(authManager.getEmail()).thenReturn("example@gmail.com");
+
         when(repository.findById(0L)).thenReturn(Optional.ofNullable(trackStats1));
         when(repository.findById(1L)).thenReturn(Optional.ofNullable(trackStats2));
         when(repository.findAllById(List.of(0L, 1L)))
@@ -152,14 +159,18 @@ public class StatisticsServiceTest {
     }
 
     @Test
-    void testGetStatisticsPcChair() throws NotFoundException, IllegalAccessException {
-        assertEquals(trackStats1, service.getStatistics(1L, 0L));
-        assertEquals(trackStats2, service.getStatistics(2L, 1L));
+    void testGetStatisticsPcChair() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
+        when(requestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(1L);
+        assertEquals(trackStats1, service.getStatistics(0L));
+
+        when(requestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(2L);
+        assertEquals(trackStats2, service.getStatistics(1L));
     }
 
     @Test
-    void testGetStatisticsGeneralChair() throws NotFoundException, IllegalAccessException {
-        Statistics eventStats = service.getStatistics(0L, 0L);
+    void testGetStatisticsGeneralChair() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
+        when(requestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(0L);
+        Statistics eventStats = service.getStatistics(0L);
         assertEquals(30L, eventStats.getTotalSubmissions());
         assertEquals(15L, eventStats.getAccepted());
         assertEquals(15L, eventStats.getRejected());
@@ -168,8 +179,9 @@ public class StatisticsServiceTest {
 
     @Test
     void testNotFoundException() {
+        when(requestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(0L);
         Exception e = assertThrows(NotFoundException.class, () -> {
-            service.getStatistics(0L, 2L);
+            service.getStatistics(2L);
         });
         assertEquals("Not Found - Statistics for a given event ID does not exist.",
                 e.getMessage());
@@ -177,8 +189,9 @@ public class StatisticsServiceTest {
 
     @Test
     void testIllegalAccessException() {
+        when(requestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(1L);
         Exception e = assertThrows(IllegalAccessException.class, () -> {
-            service.getStatistics(1L, 1L);
+            service.getStatistics(1L);
         });
         assertEquals("User has not enough permissions to get statistics.",
                 e.getMessage());

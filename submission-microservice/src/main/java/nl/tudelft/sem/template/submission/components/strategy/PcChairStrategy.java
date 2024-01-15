@@ -2,12 +2,12 @@ package nl.tudelft.sem.template.submission.components.strategy;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Statistics;
-import nl.tudelft.sem.template.model.Submission;
+import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 
 import java.util.Optional;
 
-public class PcChairStrategy implements StatisticsStrategy {
+public class PcChairStrategy implements SubmissionStrategy {
     private final StatisticsRepository statisticsRepository;
 
     /**
@@ -19,22 +19,15 @@ public class PcChairStrategy implements StatisticsStrategy {
         this.statisticsRepository = statisticsRepository;
     }
 
-    public boolean checkDeadline(long trackId) {
-        return true;
-    }
-
-    public Submission getSubmission(long userId, Submission submission) {
-        return submission;
-    }
-
     /**
      * Returns statistics for a given track.
      *
-     * @param id track id
+     * @param track track
      * @return statistics
      * @throws NotFoundException if statistics for a given track does not exist
      */
-    public Statistics getStatistics(Long id) throws NotFoundException {
+    public Statistics getStatistics(Track track) throws NotFoundException {
+        long id = track.getId();
         Optional<Statistics> optional = statisticsRepository.findById(id);
 
         if (optional.isEmpty()) {

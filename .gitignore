@@ -34,3 +34,6 @@ gradle-app.setting
 
 ### MacOS ###
 *.DS_Store
+
+# other #
+user-microservice/
