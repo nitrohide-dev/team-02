@@ -1,13 +1,11 @@
 package nl.tudelft.sem.template.submission.controllers;
 
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.api.SubmissionApi;
 import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
-import nl.tudelft.sem.template.model.SubmissionStatus;
+import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Valid;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -54,7 +51,7 @@ public class SubmissionController implements SubmissionApi {
      */
     @Override
     public ResponseEntity<String> addSubmission(@RequestParam("submissionData") String submissionData,
-                                                    @RequestParam("file") MultipartFile file) {
+                                                @RequestParam("file") MultipartFile file) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             Submission submission = objectMapper.readValue(submissionData, Submission.class);
@@ -68,6 +65,11 @@ public class SubmissionController implements SubmissionApi {
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        } catch (DeadlinePassedException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(401).build();
         }
     }
 
@@ -102,13 +104,16 @@ public class SubmissionController implements SubmissionApi {
      * @return response ok if submission is deleted, error otherwise
      */
     @Override
-    public ResponseEntity<Void> deleteSubmission(UUID submissionId, Long userId) {
+    public ResponseEntity<Void> deleteSubmission(UUID submissionId) {
         try {
-            return submissionService.delete(submissionId, userId);
+            return submissionService.delete(submissionId);
         } catch (IllegalAccessException e) {
             return ResponseEntity.status(401).build();
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).build();
+        } catch (DeadlinePassedException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
         }
     }
 
@@ -120,28 +125,33 @@ public class SubmissionController implements SubmissionApi {
      */
     @Override
     public ResponseEntity<Submission> getSubmissionById(UUID submissionId) {
-        return submissionService.getById(submissionId);
+        try {
+            return submissionService.getById(submissionId);
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(401).build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     /**
      * Returns list of submissions matching search criteria.
      *
-     * @param id        Filter by submission id (optional)
      * @param submittedBy Filter by person who submitted (optional)
-     * @param authors   Filter by author id (optional)
-     * @param title     Filter by submission name (optional)
-     * @param keywords Filters by keywords (optional)
-     * @param trackId    Filter by track id (optional)
-     * @param eventId    Filter by event id (optional)
-     * @param type     Filter by submission type (optional)
+     * @param authors     Filter by author id (optional)
+     * @param title       Filter by submission name (optional)
+     * @param keywords    Filters by keywords (optional)
+     * @param trackId     Filter by track id (optional)
+     * @param eventId     Filter by event id (optional)
+     * @param type        Filter by submission type (optional)
      * @return list of submissions. All submissions are returned if no criteria specified.
      */
     @Override
-    public ResponseEntity<List<Submission>> submissionGet(UUID id, Long submittedBy, List<Long> authors,
+    public ResponseEntity<List<Submission>> submissionGet(Long submittedBy, List<Long> authors,
                                                           String title, List<String> keywords, Long trackId,
                                                           Long eventId, PaperType type) {
 
-        return submissionService.get(id, submittedBy, authors, title,
+        return submissionService.get(submittedBy, authors, title,
                 keywords, trackId, eventId, type);
     }
 
@@ -153,15 +163,17 @@ public class SubmissionController implements SubmissionApi {
      * @return response with updated submission if success, error otherwise
      */
     @Override
-    public ResponseEntity<Submission> submissionSubmissionIdUserIdPut(UUID submissionId,
-                                                                      Long userId,
-                                                                      Submission updateSubmission) {
+    public ResponseEntity<Submission> submissionSubmissionIdPut(UUID submissionId,
+                                                                Submission updateSubmission) {
         try {
-            return submissionService.update(submissionId, userId, updateSubmission);
+            return submissionService.update(submissionId, updateSubmission);
         } catch (IllegalAccessException e) {
             return ResponseEntity.status(401).build();
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).build();
+        } catch (DeadlinePassedException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
         }
     }
 }

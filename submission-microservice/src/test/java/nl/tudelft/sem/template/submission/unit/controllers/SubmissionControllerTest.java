@@ -2,6 +2,7 @@ package nl.tudelft.sem.template.submission.unit.controllers;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Submission;
+import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
@@ -22,14 +23,10 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,7 +43,6 @@ public class SubmissionControllerTest {
     private Submission submission;
     private String submissionData;
     private MockMultipartFile mockFile;
-
 
 
     @BeforeEach
@@ -75,7 +71,7 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testAddSubmission() {
+    void testAddSubmission() throws DeadlinePassedException, IllegalAccessException {
         when(submissionService.add(any(Submission.class))).thenReturn(ResponseEntity.ok("Submission Added"));
         ResponseEntity<String> response = submissionController.addSubmission(submissionData, mockFile);
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -83,11 +79,11 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testDeleteSubmission() throws NotFoundException, IllegalAccessException {
+    void testDeleteSubmission() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
         UUID submissionId = UUID.randomUUID();
-        when(submissionService.delete(submissionId, 1L)).thenReturn(ResponseEntity.ok().build());
+        when(submissionService.delete(submissionId)).thenReturn(ResponseEntity.ok().build());
 
-        ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId, 1L);
+        ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
@@ -106,23 +102,22 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testDeleteSubmissionNotFoundException() throws NotFoundException, IllegalAccessException {
+    void testDeleteSubmissionNotFoundException() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
         UUID submissionId = UUID.randomUUID();
-        when(submissionService.delete(submissionId, 1L)).thenThrow(new NotFoundException("Not found"));
-        ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId, 1L);
+        when(submissionService.delete(submissionId)).thenThrow(new NotFoundException("Not found"));
+        ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
     @Test
-    void testUpdateSubmission_NotFoundException() throws NotFoundException, IllegalAccessException {
+    void testUpdateSubmission_NotFoundException() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
         UUID submissionId = UUID.randomUUID();
-        Long userId = 1L;
         Submission updatedSubmission = new Submission();
-        when(submissionService.update(submissionId, userId, updatedSubmission))
+        when(submissionService.update(submissionId, updatedSubmission))
                 .thenThrow(new NotFoundException("Not Found"));
 
-        ResponseEntity<Submission> response = submissionController.submissionSubmissionIdUserIdPut(submissionId,
-                userId, updatedSubmission);
+        ResponseEntity<Submission> response = submissionController.submissionSubmissionIdPut(submissionId,
+                updatedSubmission);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }

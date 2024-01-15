@@ -1,8 +1,8 @@
 package nl.tudelft.sem.template.submission.components.chain;
 
 import nl.tudelft.sem.template.model.Submission;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import nl.tudelft.sem.template.submission.components.strategy.SubmissionStrategy;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,10 +17,11 @@ public abstract class SubmissionValidator implements Validator {
      * Runs check on the next object in chain or ends traversing if we're in
      * last object in chain.
      */
-    protected ResponseEntity<?> checkNext(Submission submission, Long userId) {
+    protected SubmissionStrategy checkNext(SubmissionStrategy strategy, Long userId, Submission submission,
+                                           HttpMethod requestType) throws DeadlinePassedException, IllegalAccessException {
         if (next == null) {
-            return ResponseEntity.status(HttpStatus.OK).body(userId);
+            return strategy;
         }
-        return next.handle(submission, userId);
+        return next.handle(strategy, userId, submission, requestType);
     }
 }

@@ -1,117 +1,78 @@
 package nl.tudelft.sem.template.submission.components.strategy;
 
-import nl.tudelft.sem.template.model.PaperType;
+import nl.tudelft.sem.template.model.Comment;
 import nl.tudelft.sem.template.model.Submission;
+import nl.tudelft.sem.template.model.SubmissionStatus;
+import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
-import nl.tudelft.sem.template.submission.services.SubmissionService;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
+import nl.tudelft.sem.template.submission.services.HttpRequestService;
+import nl.tudelft.sem.template.submission.services.TrackService;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
-public class SubmissionAuthorStrategy implements SubmissionGetStrategy {
+public class SubmissionAuthorStrategy implements SubmissionStrategy {
     private final SubmissionRepository submissionRepository;
+    private final HttpRequestService httpRequestService;
+    private final TrackService trackService;
+    Long userId;
 
     /**
      * TrackStrategy constructor.
      *
      * @param submissionRepository submission repository.
      */
-    public SubmissionAuthorStrategy(SubmissionRepository submissionRepository) {
+    public SubmissionAuthorStrategy(SubmissionRepository submissionRepository,
+                                    HttpRequestService httpRequestService,
+                                    TrackService trackService,
+                                    Long userId) {
         this.submissionRepository = submissionRepository;
+        this.httpRequestService = httpRequestService;
+        this.trackService = trackService;
+        this.userId = userId;
     }
 
-    /**
-     * Returns list of submissions matching search criteria.
-     *
-     * @param id        Filter by submission id (optional)
-     * @param submittedBy Filter by person who submitted (optional)
-     * @param authors   Filter by author id (optional)
-     * @param title     Filter by submission name (optional)
-     * @param keywords Filters by keywords (optional)
-     * @param trackId    Filter by track id (optional)
-     * @param eventId    Filter by event id (optional)
-     * @param type     Filter by submission type (optional)
-     * @return list of submissions. All submissions are returned if no criteria specified.
-     */
-    public List<Submission> getSubmissions(Long userId, UUID id, Long submittedBy, List<Long> authors,
-                                        String title, List<String> keywords, Long trackId,
-                                        Long eventId, PaperType type) {
-
-        Specification<Submission> specification = Specification.where(null);
-
-        if (id != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.equal(root.get("id"), id));
-        }
-
-        if (submittedBy != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.equal(root.get("submittedBy"), submittedBy));
-        }
-
-        if (authors != null && !authors.isEmpty()) {
-            specification = specification.and((root, query, builder) ->
-                    root.get("authors").in(authors));
-        }
-
-        if (title != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.like(builder.lower(root.get("title")), title.toLowerCase()));
-        }
-
-        if (keywords != null && !keywords.isEmpty()) {
-            specification = specification.and((root, query, builder) ->
-                    root.get("keywords").in(keywords));
-        }
-
-        if (trackId != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.equal(root.get("trackId"), trackId));
-        }
-
-        if (eventId != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.equal(root.get("eventId"), eventId));
-        }
-
-        if (type != null) {
-            specification = specification.and((root, query, builder) ->
-                    builder.equal(root.get("type"), type));
-        }
-
-
-        List<Submission> submissions = submissionRepository.findAll(specification);
-
-        for (Submission submission : submissions) {
-            if (!submission.getAuthors().contains(userId)) {
-                submission.setStatus(null);
-                submission.setCreated(null);
-                submission.setUpdated(null);
-            }
-        }
-
-
-        return submissions;
-    }
-
-    /**
-     * Method for getting a single submission by its submission id.
-     *
-     * @param userId the id of the user trying to get the submission
-     * @param id the id of the submission that we are getting
-     * @return submission that we found using the id
-     */
     @Override
-    public ResponseEntity<Submission> getSubmission(Long userId, UUID id) {
-        Optional<Submission> submission = submissionRepository.findById(id);
-        if (submission.isPresent() && !submission.get().getId().equals(id)) {
-            submission.get().setUpdated(null);
-            submission.get().setCreated(null);
-            submission.get().setStatus(null);
+    public boolean checkDeadline(long trackId) {
+        String submissionDeadline = trackService.getTrackById(trackId).getSubmitDeadline();
+        if (LocalDateTime.parse(submissionDeadline).isBefore(LocalDateTime.now())) {
+            return false;
         }
-        return ResponseEntity.of(submission);
+        return true;
+    }
+
+    @Override
+    public Submission getSubmission(Submission submission) {
+        // need to change submission id to long !!!
+        if (!submission.getStatus().equals(SubmissionStatus.OPEN)) {
+            List<Comment> comments = httpRequestService.getList("/comments/" + userId + "/papers/" + submission.getId(),
+                    Comment.class, RequestType.REVIEW);
+            List<String> commentsContent = new ArrayList<>();
+            for (Comment comment : comments) {
+                commentsContent.add(comment.getDescription());
+            }
+            submission.setComments(commentsContent);
+        }
+        return submission;
+    }
+
+    @Override
+    public void updateSubmission(Submission oldSubmission, Submission newSubmission) {
+        oldSubmission.setTitle(newSubmission.getTitle());
+        oldSubmission.setAbstract(newSubmission.getAbstract());
+        oldSubmission.setAuthors(newSubmission.getAuthors());
+        oldSubmission.setKeywords(newSubmission.getKeywords());
+        oldSubmission.setType(newSubmission.getType());
+        oldSubmission.setEventId(newSubmission.getEventId());
+        oldSubmission.setTrackId(newSubmission.getTrackId());
+        oldSubmission.setLink(newSubmission.getLink());
+        oldSubmission.setUpdated(LocalDateTime.now());
+        submissionRepository.save(oldSubmission);
+    }
+
+    @Override
+    public void deleteSubmission(Submission submission) throws IllegalAccessException {
+        submissionRepository.delete(submission);
     }
 }

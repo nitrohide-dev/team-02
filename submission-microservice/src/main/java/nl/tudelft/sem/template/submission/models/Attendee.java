@@ -4,7 +4,7 @@ import nl.tudelft.sem.template.model.Role;
 
 import java.util.Objects;
 
-public class Chair {
+public class Attendee {
     private final long userId;
     private final long eventId;
     private final long trackId;
@@ -18,7 +18,7 @@ public class Chair {
      * @param trackId track id
      * @param role    role of a user
      */
-    public Chair(long userId, long eventId, long trackId, Role role) {
+    public Attendee(long userId, long eventId, long trackId, Role role) {
         this.userId = userId;
         this.eventId = eventId;
         this.trackId = trackId;
@@ -74,7 +74,7 @@ public class Chair {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Chair chair = (Chair) o;
+        Attendee chair = (Attendee) o;
         return userId == chair.userId && eventId == chair.eventId && trackId == chair.trackId && role == chair.role;
     }
 

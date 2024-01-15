@@ -4,13 +4,13 @@ import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.*;
 import nl.tudelft.sem.template.submission.Application;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
-import nl.tudelft.sem.template.submission.models.Chair;
+import nl.tudelft.sem.template.submission.models.Attendee;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import nl.tudelft.sem.template.submission.services.StatisticsService;
-import nl.tudelft.sem.template.submission.services.TrackService;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
+import nl.tudelft.sem.template.submission.services.TrackService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,9 +58,9 @@ public class StatisticsServiceTest {
     private static Statistics trackStats1;
     private static Statistics trackStats2;
 
-    private static Chair generalChair;
-    private static Chair pcChair1;
-    private static Chair pcChair2;
+    private static Attendee generalChair;
+    private static Attendee pcChair1;
+    private static Attendee pcChair2;
 
     private static Track track1;
     private static Track track2;
@@ -70,9 +70,9 @@ public class StatisticsServiceTest {
 
     @BeforeAll
     static void generalSetup() {
-        generalChair = new Chair(0L, 0L, 0L, Role.GENERAL_CHAIR);
-        pcChair1 = new Chair(1L, 0L, 0L, Role.PC_CHAIR);
-        pcChair2 = new Chair(2L, 0L, 1L, Role.PC_CHAIR);
+        generalChair = new Attendee(0L, 0L, 0L, Role.GENERAL_CHAIR);
+        pcChair1 = new Attendee(1L, 0L, 0L, Role.PC_CHAIR);
+        pcChair2 = new Attendee(2L, 0L, 1L, Role.PC_CHAIR);
 
         track1 = new Track();
         track1.setId(0L);
@@ -131,11 +131,11 @@ public class StatisticsServiceTest {
         when(requestService.getList("track/" + "eventId=1", Track.class, RequestType.USER))
                 .thenReturn(List.of());
 
-        when(requestService.getList("attendee/0", Chair.class, RequestType.USER))
+        when(requestService.getList("attendee/0", Attendee.class, RequestType.USER))
                 .thenReturn(List.of(generalChair, pcChair1));
-        when(requestService.getList("attendee/1", Chair.class, RequestType.USER))
+        when(requestService.getList("attendee/1", Attendee.class, RequestType.USER))
                 .thenReturn(List.of(generalChair, pcChair2));
-        when(requestService.getList("attendee/2", Chair.class, RequestType.USER))
+        when(requestService.getList("attendee/2", Attendee.class, RequestType.USER))
                 .thenReturn(List.of(generalChair));
     }
 

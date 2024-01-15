@@ -2,10 +2,10 @@ package nl.tudelft.sem.template.submission.services;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.*;
-import nl.tudelft.sem.template.submission.components.strategy.EventStrategy;
+import nl.tudelft.sem.template.submission.components.strategy.GeneralChairStrategy;
+import nl.tudelft.sem.template.submission.components.strategy.PcChairStrategy;
 import nl.tudelft.sem.template.submission.components.strategy.StatisticsStrategy;
-import nl.tudelft.sem.template.submission.components.strategy.TrackStrategy;
-import nl.tudelft.sem.template.submission.models.Chair;
+import nl.tudelft.sem.template.submission.models.Attendee;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import org.springframework.stereotype.Service;
@@ -46,8 +46,8 @@ public class StatisticsService {
      * @return true if user has this role, false otherwise.
      */
     private boolean checkPermissions(Long trackId, Long userId, Role role) {
-        List<Chair> chairsList = requestService.getList("attendee/" + trackId, Chair.class, RequestType.USER);
-        for (Chair c : chairsList) {
+        List<Attendee> chairsList = requestService.getList("attendee/" + trackId, Attendee.class, RequestType.USER);
+        for (Attendee c : chairsList) {
             if (c.getUserId() == userId && c.getRole().equals(role)) {
                 return true;
             }
@@ -69,12 +69,12 @@ public class StatisticsService {
         long id;
 
         if (checkPermissions(trackId, userId, Role.GENERAL_CHAIR)) {
-            strategy = new EventStrategy(statisticsRepository, requestService);
+            strategy = new GeneralChairStrategy(statisticsRepository, requestService);
             Track track = trackService.getTrackById(trackId);
             id = track.getEventId();
         } else {
             if (checkPermissions(trackId, userId, Role.PC_CHAIR)) {
-                strategy = new TrackStrategy(statisticsRepository);
+                strategy = new PcChairStrategy(statisticsRepository);
                 id = trackId;
             } else {
                 throw new IllegalAccessException("User has not enough permissions to get statistics.");
