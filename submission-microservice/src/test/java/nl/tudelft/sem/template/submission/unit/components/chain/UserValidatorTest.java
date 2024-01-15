@@ -83,7 +83,7 @@ class UserValidatorTest {
                 Attendee.class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
 
         IllegalAccessException e =  assertThrows(IllegalAccessException.class,
-            () -> userValidator.handle(nextStrategy, userId, submission, requestType));
+            () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, requestType));
         assertEquals(e.getMessage(), "You cannot delete a submission.");
 
     }
@@ -100,13 +100,14 @@ class UserValidatorTest {
                 Attendee.class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
 
         IllegalAccessException e =  assertThrows(IllegalAccessException.class,
-                () -> userValidator.handle(nextStrategy, userId, submission, requestType));
+                () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, requestType));
         assertEquals(e.getMessage(), "You cannot modify a submission.");
 
     }
 
     @Test
     void subreviewerTest() throws IllegalAccessException, DeadlinePassedException {
+        submission.setTrackId(null);
         String email = "author@example.com";
         when(authManager.getEmail()).thenReturn(email);
         when(httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER)).thenReturn(userId);
@@ -117,12 +118,13 @@ class UserValidatorTest {
         when(httpRequestService.getList("attendee/eventId=" + submission.getEventId() + "&trackId=" + submission.getTrackId()
                         + "&role=sub_reviewer",
                 Attendee.class, RequestType.USER)).thenReturn(attendeeList);
-        SubmissionStrategy result = userValidator.handle(nextStrategy, null, submission, requestType);
+        SubmissionStrategy result = userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, requestType);
         assertEquals(result.getClass(), SubmissionReviewerStrategy.class);
     }
 
     @Test
     void testAuthor() throws IllegalAccessException, DeadlinePassedException {
+        submission.setTrackId(null);
         submission.setAuthors(new ArrayList<>(Arrays.asList(userId)));
         String email = "author@example.com";
         when(authManager.getEmail()).thenReturn(email);
@@ -133,7 +135,7 @@ class UserValidatorTest {
         when(httpRequestService.getList("attendee/eventId=" + submission.getEventId() + "&trackId=" + submission.getTrackId()
                         + "&role=sub_reviewer",
                 Attendee.class, RequestType.USER)).thenReturn(attendeeList);
-        SubmissionStrategy result = userValidator.handle(nextStrategy, null, submission, HttpMethod.PUT);
+        SubmissionStrategy result = userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, HttpMethod.PUT);
         assertEquals(result.getClass(), SubmissionAuthorStrategy.class);
     }
 
@@ -154,7 +156,29 @@ class UserValidatorTest {
                 Attendee.class, RequestType.USER)).thenReturn(attendeeList);
 
         IllegalAccessException e =  assertThrows(IllegalAccessException.class,
-                () -> userValidator.handle(nextStrategy, userId, submission, HttpMethod.PUT));
+                () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, HttpMethod.PUT));
+        assertEquals(e.getMessage(), "You cannot modify a submission.");
+
+    }
+
+    @Test
+    void checkPermissionsMultipleAttendees() throws IllegalAccessException, DeadlinePassedException {
+        String email = "author@example.com";
+        when(authManager.getEmail()).thenReturn(email);
+        when(httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER)).thenReturn(userId);
+
+        Attendee a = new Attendee(99L, 1L, 2L, Role.SUB_REVIEWER);
+        Attendee b = new Attendee(userId, 1L, 2L, Role.SUB_REVIEWER);
+
+        List<Attendee> attendeeList = new ArrayList<Attendee>();
+        attendeeList.add(a);
+        attendeeList.add(b);
+        when(httpRequestService.getList("attendee/eventId=" + submission.getEventId() + "&trackId=" + submission.getTrackId()
+                        + "&role=sub_reviewer",
+                Attendee.class, RequestType.USER)).thenReturn(attendeeList);
+
+        IllegalAccessException e =  assertThrows(IllegalAccessException.class,
+                () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, HttpMethod.PUT));
         assertEquals(e.getMessage(), "You cannot modify a submission.");
 
     }

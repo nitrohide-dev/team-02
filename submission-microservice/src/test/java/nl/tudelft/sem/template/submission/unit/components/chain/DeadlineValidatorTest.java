@@ -55,7 +55,7 @@ class DeadlineValidatorTest {
         SubmissionStrategy nextStrategy = mock(SubmissionStrategy.class);
         HttpMethod requestType = HttpMethod.PUT;
         when(nextStrategy.checkDeadline(14L)).thenReturn(true);
-        SubmissionStrategy result = deadlineValidator.handle(nextStrategy, 123L, submission, requestType);
+        SubmissionStrategy result = deadlineValidator.handle(nextStrategy, 123L, submission.getTrackId(), submission, requestType);
 
         //assert
         assertEquals(nextStrategy, result);
@@ -71,7 +71,7 @@ class DeadlineValidatorTest {
 
         // assert
         assertThrows(DeadlinePassedException.class, () ->
-                deadlineValidator.handle(nextStrategy, 123L, submission, requestType));
+                deadlineValidator.handle(nextStrategy, 123L, submission.getTrackId(), submission, requestType));
 
         verify(nextStrategy).checkDeadline(submission.getTrackId());
         verifyNoMoreInteractions(nextStrategy);
