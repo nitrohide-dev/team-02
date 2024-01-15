@@ -59,29 +59,32 @@ class UserValidatorTest {
     private Long userId;
     private SubmissionStrategy nextStrategy;
 
+    Long trackId;
+    Long eventId;
+
     @BeforeEach
     void setUp() {
         submission = new Submission();
-        submission.setTrackId(14L);
-        submission.setEventId(15L);
+        trackId = 14L;
+        eventId = 15L;
+        submission.setTrackId(trackId);
+        submission.setEventId(eventId);
         submission.setAuthors(new ArrayList<>(Arrays.asList(1L, 2L)));
         userId = 123L;
         nextStrategy = mock(SubmissionStrategy.class);
         userValidator.setNext(null);
-
-
+        String email = "author@example.com";
+        when(httpRequestService.getAttribute("user/byEmail/"
+                + email, RequestType.USER, "id")).thenReturn(String.valueOf(userId));
+        when(authManager.getEmail()).thenReturn(email);
     }
 
     @Test
     void deleteAttemptTest() throws IllegalAccessException, DeadlinePassedException {
         HttpMethod requestType = HttpMethod.DELETE;
-        String email = "author@example.com";
-        when(authManager.getEmail()).thenReturn(email);
-        when(httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER)).thenReturn(userId);
-
-        when(httpRequestService.getList("attendee/eventId=" + Long.class + "&trackId=" + Long.class
+        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
                         + "&role=sub_reviewer",
-                Attendee.class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
+                Attendee[].class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
 
         IllegalAccessException e =  assertThrows(IllegalAccessException.class,
             () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, requestType));
@@ -92,13 +95,9 @@ class UserValidatorTest {
     @Test
     void modifyAttemptTestAttendee() throws IllegalAccessException, DeadlinePassedException {
         HttpMethod requestType = HttpMethod.PUT;
-        String email = "author@example.com";
-        when(authManager.getEmail()).thenReturn(email);
-        when(httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER)).thenReturn(userId);
-
-        when(httpRequestService.getList("attendee/eventId=" + Long.class + "&trackId=" + Long.class
+        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
                         + "&role=sub_reviewer",
-                Attendee.class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
+                Attendee[].class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
 
         IllegalAccessException e =  assertThrows(IllegalAccessException.class,
                 () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, requestType));
@@ -107,36 +106,33 @@ class UserValidatorTest {
     }
 
     @Test
-    void subreviewerTest() throws IllegalAccessException, DeadlinePassedException {
-        submission.setTrackId(null);
-        String email = "author@example.com";
-        when(authManager.getEmail()).thenReturn(email);
-        when(httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER)).thenReturn(userId);
-        Attendee a = new Attendee(userId, 1L, 2L, Role.SUB_REVIEWER);
+    void subreviewerTest() throws Exception {
+        Attendee a = new Attendee(userId, userId, 2L, 3L, Role.SUB_REVIEWER);
         List<Attendee> attendeeList = new ArrayList<Attendee>();
         HttpMethod requestType = HttpMethod.PUT;
         attendeeList.add(a);
-        when(httpRequestService.getList("attendee/eventId=" + submission.getEventId() + "&trackId=" + submission.getTrackId()
+        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
                         + "&role=sub_reviewer",
-                Attendee.class, RequestType.USER)).thenReturn(attendeeList);
+                Attendee[].class, RequestType.USER)).thenReturn(attendeeList);
+
         SubmissionStrategy result = userValidator.handle(nextStrategy,
-                userId, submission.getTrackId(), submission, requestType);
+                userId, null, submission, requestType);
         assertEquals(result.getClass(), SubmissionReviewerStrategy.class);
     }
 
     @Test
-    void testAuthor() throws IllegalAccessException, DeadlinePassedException {
+    void testAuthor() throws Exception {
         submission.setTrackId(null);
         submission.setAuthors(new ArrayList<>(Arrays.asList(userId)));
         String email = "author@example.com";
         when(authManager.getEmail()).thenReturn(email);
         when(httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER)).thenReturn(userId);
-        Attendee a = new Attendee(userId, 1L, 2L, Role.SUB_REVIEWER);
+        Attendee a = new Attendee(userId, 1L, 2L, 3L, Role.SUB_REVIEWER);
         List<Attendee> attendeeList = new ArrayList<Attendee>();
         attendeeList.add(a);
-        when(httpRequestService.getList("attendee/eventId=" + submission.getEventId() + "&trackId=" + submission.getTrackId()
+        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
                         + "&role=sub_reviewer",
-                Attendee.class, RequestType.USER)).thenReturn(attendeeList);
+                Attendee[].class, RequestType.USER)).thenReturn(attendeeList);
         SubmissionStrategy result = userValidator.handle(nextStrategy,
                 userId, submission.getTrackId(), submission, HttpMethod.PUT);
         assertEquals(result.getClass(), SubmissionAuthorStrategy.class);
@@ -148,15 +144,15 @@ class UserValidatorTest {
         when(authManager.getEmail()).thenReturn(email);
         when(httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER)).thenReturn(userId);
 
-        Attendee a = new Attendee(99L, 1L, 2L, Role.SUB_REVIEWER);
-        Attendee b = new Attendee(98L, 1L, 2L, Role.SUB_REVIEWER);
+        Attendee a = new Attendee(99L, 1L, 2L, 3L, Role.SUB_REVIEWER);
+        Attendee b = new Attendee(98L, 1L, 2L, 3L, Role.SUB_REVIEWER);
 
         List<Attendee> attendeeList = new ArrayList<Attendee>();
         attendeeList.add(a);
         attendeeList.add(b);
-        when(httpRequestService.getList("attendee/eventId=" + submission.getEventId() + "&trackId=" + submission.getTrackId()
+        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
                         + "&role=sub_reviewer",
-                Attendee.class, RequestType.USER)).thenReturn(attendeeList);
+                Attendee[].class, RequestType.USER)).thenReturn(attendeeList);
 
         IllegalAccessException e =  assertThrows(IllegalAccessException.class,
                 () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, HttpMethod.PUT));
@@ -165,22 +161,18 @@ class UserValidatorTest {
     }
 
     @Test
-    void checkPermissionsMultipleAttendees() throws IllegalAccessException, DeadlinePassedException {
-        String email = "author@example.com";
-        when(authManager.getEmail()).thenReturn(email);
-        when(httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER)).thenReturn(userId);
-
-        Attendee a = new Attendee(99L, 1L, 2L, Role.SUB_REVIEWER);
-        Attendee b = new Attendee(99L, 1L, 2L, Role.ATTENDEE);
-        Attendee c = new Attendee(userId, 1L, 2L, Role.ATTENDEE);
+    void checkPermissionsMultipleAttendees() throws Exception {
+        Attendee a = new Attendee(99L, 1L, 2L, 3L, Role.SUB_REVIEWER);
+        Attendee b = new Attendee(99L, 1L, 2L, 3L, Role.ATTENDEE);
+        Attendee c = new Attendee(userId, 1L, 2L, 3L, Role.ATTENDEE);
 
         List<Attendee> attendeeList = new ArrayList<Attendee>();
         attendeeList.add(a);
         attendeeList.add(b);
         attendeeList.add(c);
-        when(httpRequestService.getList("attendee/eventId=" + submission.getEventId() + "&trackId=" + submission.getTrackId()
+        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
                         + "&role=sub_reviewer",
-                Attendee.class, RequestType.USER)).thenReturn(attendeeList);
+                Attendee[].class, RequestType.USER)).thenReturn(attendeeList);
 
         SubmissionStrategy result = userValidator.handle(nextStrategy,
                 userId, submission.getTrackId(), submission, HttpMethod.GET);
@@ -194,19 +186,20 @@ class UserValidatorTest {
         when(authManager.getEmail()).thenReturn(email);
         when(httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER)).thenReturn(userId);
 
-        when(httpRequestService.getList("attendee/eventId=" + Long.class + "&trackId=" + Long.class
+        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
                         + "&role=sub_reviewer",
-                Attendee.class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
-        Attendee a = new Attendee(99L, 1L, 2L, Role.SUB_REVIEWER);
-        Attendee b = new Attendee(99L, 1L, 2L, Role.ATTENDEE);
-        Attendee c = new Attendee(userId, 1L, 2L, Role.ATTENDEE);
+                Attendee[].class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
+        Attendee a = new Attendee(99L, 1L, 2L, 3L, Role.SUB_REVIEWER);
+        Attendee b = new Attendee(99L, 1L, 2L, 3L, Role.ATTENDEE);
+        Attendee c = new Attendee(userId, 1L, 2L, 3L, Role.ATTENDEE);
 
         List<Attendee> attendeeList = new ArrayList<Attendee>();
         attendeeList.add(a);
         attendeeList.add(b);
         attendeeList.add(c);
-        when(httpRequestService.getList("attendee/" + submission.getTrackId(),
-                Attendee.class, RequestType.USER)).thenReturn(attendeeList);
+        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
+                        + "&role=sub_reviewer",
+                Attendee[].class, RequestType.USER)).thenReturn(attendeeList);
 
         IllegalAccessException e =  assertThrows(IllegalAccessException.class,
                 () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, HttpMethod.PUT));

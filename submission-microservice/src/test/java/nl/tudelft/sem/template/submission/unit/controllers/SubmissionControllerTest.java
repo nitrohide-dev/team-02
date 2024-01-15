@@ -79,7 +79,7 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testAddSubmission() throws DeadlinePassedException, IllegalAccessException {
+    void testAddSubmission() throws Exception {
         when(submissionService.add(any(Submission.class))).thenReturn(ResponseEntity.ok("Submission Added"));
         ResponseEntity<String> response = submissionController.addSubmission(submissionData, mockFile);
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -87,8 +87,8 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testDeleteSubmission() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        UUID submissionId = UUID.randomUUID();
+    void testDeleteSubmission() throws Exception {
+        Long submissionId = 123L;
         when(submissionService.delete(submissionId)).thenReturn(ResponseEntity.ok().build());
 
         ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId);
@@ -110,16 +110,16 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testDeleteSubmissionNotFoundException() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        UUID submissionId = UUID.randomUUID();
+    void testDeleteSubmissionNotFoundException() throws Exception {
+        Long submissionId = 123L;
         when(submissionService.delete(submissionId)).thenThrow(new NotFoundException("Not found"));
         ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
     @Test
-    void testUpdateSubmission_NotFoundException() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        UUID submissionId = UUID.randomUUID();
+    void testUpdateSubmission_NotFoundException() throws Exception {
+        Long submissionId = 123L;
         Submission updatedSubmission = new Submission();
         when(submissionService.update(submissionId, updatedSubmission))
                 .thenThrow(new NotFoundException("Not Found"));
@@ -131,8 +131,8 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testDeleteSubmissionNoPermission() throws NotFoundException, DeadlinePassedException, IllegalAccessException {
-        UUID submissionId = UUID.randomUUID();
+    void testDeleteSubmissionNoPermission() throws Exception {
+        Long submissionId = 123L;
         when(submissionService.delete(submissionId)).thenThrow(IllegalAccessException.class);
         ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId);
 
@@ -177,16 +177,16 @@ public class SubmissionControllerTest {
 
     @Test
     void testDeleteSubmissionDeadlinePassedException()
-            throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        UUID submissionId = UUID.randomUUID();
+            throws Exception {
+        Long submissionId = 123L;
         when(submissionService.delete(submissionId)).thenThrow(new DeadlinePassedException("Deadline has passed."));
         ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
     @Test
-    void testGetSubmissionByIdReturnsSubmission() throws DeadlinePassedException, IllegalAccessException {
-        UUID submissionId = UUID.randomUUID();
+    void testGetSubmissionByIdReturnsSubmission() throws Exception {
+        Long submissionId = 123L;
         ResponseEntity<Submission> expectedResponse = ResponseEntity.ok(new Submission());
 
         when(submissionService.getById(submissionId)).thenReturn(expectedResponse);
@@ -198,8 +198,8 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testGetSubmissionByIdBadRequest() throws DeadlinePassedException, IllegalAccessException {
-        UUID submissionId = UUID.randomUUID();
+    void testGetSubmissionByIdBadRequest() throws Exception {
+        Long submissionId = 123L;
 
         when(submissionService.getById(submissionId)).thenThrow(IllegalArgumentException.class);
 
@@ -209,8 +209,8 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testGetSubmissionByIdUnauthorized() throws DeadlinePassedException, IllegalAccessException {
-        UUID submissionId = UUID.randomUUID();
+    void testGetSubmissionByIdUnauthorized() throws Exception {
+        Long submissionId = 123L;
 
         when(submissionService.getById(submissionId)).thenThrow(IllegalAccessException.class);
 
@@ -221,8 +221,8 @@ public class SubmissionControllerTest {
 
     @Test
     void testUpdateSubmissionIllegalAccessException()
-            throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        UUID submissionId = UUID.randomUUID();
+            throws Exception {
+        Long submissionId = 123L;
         Submission updatedSubmission = new Submission();
         when(submissionService.update(submissionId, updatedSubmission))
                 .thenThrow(new IllegalAccessException("This is illegal."));
@@ -235,8 +235,8 @@ public class SubmissionControllerTest {
 
     @Test
     void testUpdateSubmissionDeadlinePassedException()
-            throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        UUID submissionId = UUID.randomUUID();
+            throws Exception {
+        Long submissionId = 123L;
         Submission updatedSubmission = new Submission();
         when(submissionService.update(submissionId, updatedSubmission))
                 .thenThrow(new DeadlinePassedException("It's over."));
@@ -248,8 +248,8 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testUpdateSubmissionSuccess() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        UUID submissionId = UUID.randomUUID();
+    void testUpdateSubmissionSuccess() throws Exception {
+        Long submissionId = 123L;
         Submission updatedSubmission = new Submission();
         when(submissionService.update(submissionId, updatedSubmission))
                 .thenReturn(new ResponseEntity<Submission>(HttpStatus.ACCEPTED));

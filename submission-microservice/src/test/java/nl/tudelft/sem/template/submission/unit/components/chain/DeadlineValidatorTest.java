@@ -49,7 +49,7 @@ class DeadlineValidatorTest {
     }
 
     @Test
-    void handle_ValidSubmissionBeforeDeadline_ReturnsNextStrategy() throws DeadlinePassedException, IllegalAccessException {
+    void handle_ValidSubmissionBeforeDeadline_ReturnsNextStrategy() throws Exception {
 
         SubmissionStrategy nextStrategy = mock(SubmissionStrategy.class);
         HttpMethod requestType = HttpMethod.PUT;
