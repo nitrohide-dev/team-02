@@ -27,36 +27,37 @@ class ChairTest {
     private SubmissionService submissionService;
     @MockBean
     private SubmissionController submissionController;
+    private Long id = 0L;
 
     @Test
     void testGetUserId() {
-        Attendee chair = new Attendee(1L, 1L, 1L, Role.PC_CHAIR);
+        Attendee chair = new Attendee(id, 1L, 1L, 1L, Role.PC_CHAIR);
         assertEquals(1L, chair.getUserId());
     }
 
     @Test
     void testGetEventId() {
-        Attendee chair = new Attendee(1L, 1L, 1L, Role.PC_CHAIR);
+        Attendee chair = new Attendee(id, 1L, 1L, 1L, Role.PC_CHAIR);
         assertEquals(1L, chair.getEventId());
     }
 
     @Test
     void testGetTrackId() {
-        Attendee chair = new Attendee(1L, 1L, 1L, Role.PC_CHAIR);
+        Attendee chair = new Attendee(id, 1L, 1L, 1L, Role.PC_CHAIR);
         assertEquals(1L, chair.getTrackId());
     }
 
     @Test
     void testGetRole() {
-        Attendee chair = new Attendee(1L, 1L, 1L, Role.GENERAL_CHAIR);
+        Attendee chair = new Attendee(id, 1L, 1L, 1L, Role.GENERAL_CHAIR);
         assertEquals(Role.GENERAL_CHAIR, chair.getRole());
     }
 
     @Test
     void testEquals() {
-        Attendee chair1 = new Attendee(1L, 1L, 1L, Role.GENERAL_CHAIR);
-        Attendee chair2 = new Attendee(1L, 1L, 1L, Role.GENERAL_CHAIR);
-        Attendee chair3 = new Attendee(2L, 2L, 2L, Role.GENERAL_CHAIR);
+        Attendee chair1 = new Attendee(id, 1L, 1L, 1L, Role.GENERAL_CHAIR);
+        Attendee chair2 = new Attendee(id, 1L, 1L, 1L, Role.GENERAL_CHAIR);
+        Attendee chair3 = new Attendee(id, 2L, 2L, 2L, Role.GENERAL_CHAIR);
 
         assertEquals(chair1, chair2);
         assertNotEquals(chair1, chair3);
@@ -64,9 +65,9 @@ class ChairTest {
 
     @Test
     void testHashCode() {
-        Attendee chair1 = new Attendee(1L, 1L, 1L, Role.PC_CHAIR);
-        Attendee chair2 = new Attendee(1L, 1L, 1L, Role.PC_CHAIR);
-        Attendee chair3 = new Attendee(1L, 1L, 1L, Role.GENERAL_CHAIR);
+        Attendee chair1 = new Attendee(id, 1L, 1L, 1L, Role.PC_CHAIR);
+        Attendee chair2 = new Attendee(id, 1L, 1L, 1L, Role.PC_CHAIR);
+        Attendee chair3 = new Attendee(id, 1L, 1L, 1L, Role.GENERAL_CHAIR);
 
         assertEquals(chair1.hashCode(), chair2.hashCode());
         assertNotEquals(chair1.hashCode(), chair3.hashCode());
@@ -74,7 +75,7 @@ class ChairTest {
 
     @Test
     void testToString() {
-        Attendee chair = new Attendee(1L, 1L, 1L, Role.PC_CHAIR);
+        Attendee chair = new Attendee(id, 1L, 1L, 1L, Role.PC_CHAIR);
 
         String expected = "Chair{userId=1, eventId=1, trackId=1, role=pc_chair}";
         assertEquals(expected, chair.toString());

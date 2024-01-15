@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-public class UserValidator extends SubmissionValidator {
+public class UserValidator extends BaseValidator {
     SubmissionRepository submissionRepository;
     StatisticsRepository statisticsRepository;
     HttpRequestService httpRequestService;
@@ -50,7 +50,8 @@ public class UserValidator extends SubmissionValidator {
             }
             List<Attendee> reviewers = httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
                             + "&role=sub_reviewer",
-                    Attendee.class, RequestType.USER);
+                    Attendee[].class, RequestType.USER);
+
             long[] userIds = reviewers.stream().mapToLong(Attendee::getUserId).toArray();
             for (int i = 0; i < userIds.length; i++) {
                 if (userId == userIds[i]) {
@@ -59,7 +60,7 @@ public class UserValidator extends SubmissionValidator {
             }
         }
 
-        List<Attendee> chairsList = httpRequestService.getList("attendee/" + trackId, Attendee.class, RequestType.USER);
+        List<Attendee> chairsList = httpRequestService.getList("attendee/" + trackId, Attendee[].class, RequestType.USER);
         for (Attendee c : chairsList) {
             if (c.getUserId() == userId && c.getRole().equals(Role.GENERAL_CHAIR)) {
                 return Role.GENERAL_CHAIR;
@@ -82,12 +83,15 @@ public class UserValidator extends SubmissionValidator {
     public SubmissionStrategy handle(SubmissionStrategy strategy,
                                      Long userId, Long trackId,
                                      Submission submission,
-                                     HttpMethod requestType) throws IllegalAccessException, DeadlinePassedException {
+                                     HttpMethod requestType) throws Exception {
 
         String email = authManager.getEmail();
-
-        userId = httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER);
+        userId = Long.parseLong(httpRequestService.getAttribute("user/byEmail/" + email, RequestType.USER, "id"));
         Role role = checkPermissions(userId, trackId, submission);
+        if (requestType.equals(HttpMethod.POST)) {
+            role = Role.AUTHOR;
+        }
+        System.out.println(role);
 
         if (requestType.equals(HttpMethod.DELETE) && !role.equals(Role.AUTHOR)) {
             throw new IllegalAccessException("You cannot delete a submission.");

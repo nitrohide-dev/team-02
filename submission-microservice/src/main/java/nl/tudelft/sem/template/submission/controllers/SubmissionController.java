@@ -6,6 +6,7 @@ import nl.tudelft.sem.template.api.SubmissionApi;
 import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
+import nl.tudelft.sem.template.submission.components.chain.DuplicateSubmissionException;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +71,9 @@ public class SubmissionController implements SubmissionApi {
             return ResponseEntity.badRequest().build();
         } catch (IllegalAccessException e) {
             return ResponseEntity.status(401).build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
         }
     }
 
@@ -104,7 +108,7 @@ public class SubmissionController implements SubmissionApi {
      * @return response ok if submission is deleted, error otherwise
      */
     @Override
-    public ResponseEntity<Void> deleteSubmission(UUID submissionId) {
+    public ResponseEntity<Void> deleteSubmission(Long submissionId) {
         try {
             return submissionService.delete(submissionId);
         } catch (IllegalAccessException e) {
@@ -112,6 +116,9 @@ public class SubmissionController implements SubmissionApi {
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).build();
         } catch (DeadlinePassedException e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
@@ -124,7 +131,7 @@ public class SubmissionController implements SubmissionApi {
      * @return submission if it is found for a given id, error otherwise
      */
     @Override
-    public ResponseEntity<Submission> getSubmissionById(UUID submissionId) {
+    public ResponseEntity<Submission> getSubmissionById(Long submissionId) {
         try {
             return submissionService.getById(submissionId);
         } catch (IllegalAccessException e) {
@@ -163,7 +170,7 @@ public class SubmissionController implements SubmissionApi {
      * @return response with updated submission if success, error otherwise
      */
     @Override
-    public ResponseEntity<Submission> submissionSubmissionIdPut(UUID submissionId,
+    public ResponseEntity<Submission> submissionSubmissionIdPut(Long submissionId,
                                                                 Submission updateSubmission) {
         try {
             return submissionService.update(submissionId, updateSubmission);
@@ -173,6 +180,11 @@ public class SubmissionController implements SubmissionApi {
             return ResponseEntity.status(404).build();
         } catch (DeadlinePassedException e) {
             e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        } catch (DuplicateSubmissionException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
     }

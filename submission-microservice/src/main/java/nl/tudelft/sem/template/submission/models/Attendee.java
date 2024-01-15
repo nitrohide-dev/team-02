@@ -1,28 +1,56 @@
 package nl.tudelft.sem.template.submission.models;
 
+import lombok.Getter;
+import lombok.Setter;
 import nl.tudelft.sem.template.model.Role;
 
 import java.util.Objects;
 
+@Getter
+@Setter
+
 public class Attendee {
+    private final long id;
     private final long userId;
     private final long eventId;
     private final long trackId;
     private final Role role;
 
     /**
+     * Default constructor.
+     */
+    public Attendee() {
+        this.id = 0;
+        this.userId = 0;
+        this.eventId = 0;
+        this.trackId = 0;
+        this.role = Role.ATTENDEE;
+    }
+
+    /**
      * Chair constructor.
      *
+     * @param id      id
      * @param userId  user id
      * @param eventId event id
      * @param trackId track id
      * @param role    role of a user
      */
-    public Attendee(long userId, long eventId, long trackId, Role role) {
+    public Attendee(long id, long userId, long eventId, long trackId, Role role) {
+        this.id = id;
         this.userId = userId;
         this.eventId = eventId;
         this.trackId = trackId;
         this.role = role;
+    }
+
+    /**
+     * Returns id.
+     *
+     * @return id.
+     */
+    public long getId() {
+        return id;
     }
 
     /**
