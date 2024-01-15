@@ -5,7 +5,6 @@ import nl.tudelft.sem.template.submission.Application;
 import nl.tudelft.sem.template.submission.components.chain.DeadlineValidator;
 import nl.tudelft.sem.template.submission.components.strategy.SubmissionStrategy;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
-import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,7 +54,8 @@ class DeadlineValidatorTest {
         SubmissionStrategy nextStrategy = mock(SubmissionStrategy.class);
         HttpMethod requestType = HttpMethod.PUT;
         when(nextStrategy.checkDeadline(14L)).thenReturn(true);
-        SubmissionStrategy result = deadlineValidator.handle(nextStrategy, 123L, submission.getTrackId(), submission, requestType);
+        SubmissionStrategy result = deadlineValidator.handle(nextStrategy,
+                123L, submission.getTrackId(), submission, requestType);
 
         //assert
         assertEquals(nextStrategy, result);

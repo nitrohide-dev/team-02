@@ -118,7 +118,8 @@ class UserValidatorTest {
         when(httpRequestService.getList("attendee/eventId=" + submission.getEventId() + "&trackId=" + submission.getTrackId()
                         + "&role=sub_reviewer",
                 Attendee.class, RequestType.USER)).thenReturn(attendeeList);
-        SubmissionStrategy result = userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, requestType);
+        SubmissionStrategy result = userValidator.handle(nextStrategy,
+                userId, submission.getTrackId(), submission, requestType);
         assertEquals(result.getClass(), SubmissionReviewerStrategy.class);
     }
 
@@ -135,7 +136,8 @@ class UserValidatorTest {
         when(httpRequestService.getList("attendee/eventId=" + submission.getEventId() + "&trackId=" + submission.getTrackId()
                         + "&role=sub_reviewer",
                 Attendee.class, RequestType.USER)).thenReturn(attendeeList);
-        SubmissionStrategy result = userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, HttpMethod.PUT);
+        SubmissionStrategy result = userValidator.handle(nextStrategy,
+                userId, submission.getTrackId(), submission, HttpMethod.PUT);
         assertEquals(result.getClass(), SubmissionAuthorStrategy.class);
     }
 
