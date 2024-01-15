@@ -12,6 +12,7 @@ import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
 import nl.tudelft.sem.template.submission.components.chain.UserValidator;
 import nl.tudelft.sem.template.submission.components.strategy.SubmissionStrategy;
 import nl.tudelft.sem.template.submission.models.RequestType;
+import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -30,6 +31,7 @@ import java.util.UUID;
 public class SubmissionService {
     private final SubmissionRepository submissionRepository;
     private final StatisticsService statisticsService;
+    private final StatisticsRepository statisticsRepository;
     private final TrackService trackService;
     private final HttpRequestService httpRequestService;
     private final AuthManager authManager;
@@ -43,18 +45,21 @@ public class SubmissionService {
     @Autowired
     public SubmissionService(SubmissionRepository submissionRepository,
                              StatisticsService statisticsService,
+                             StatisticsRepository statisticsRepository,
                              TrackService trackService,
                              HttpRequestService httpRequestService,
                              AuthManager authManager) {
         this.submissionRepository = submissionRepository;
         this.statisticsService = statisticsService;
+        this.statisticsRepository = statisticsRepository;
         this.trackService = trackService;
         this.httpRequestService = httpRequestService;
         this.authManager = authManager;
     }
 
     private void setupChain() {
-        handler = new UserValidator(submissionRepository, httpRequestService, trackService, authManager);
+        handler = new UserValidator(submissionRepository, statisticsRepository, httpRequestService, trackService,
+                authManager);
         handler.setNext(new DeadlineValidator(httpRequestService));
     }
 
@@ -114,7 +119,7 @@ public class SubmissionService {
 
         Submission submission = deleted.get();
         setupChain();
-        SubmissionStrategy strategy = handler.handle(null, null, submission, HttpMethod.DELETE);
+        SubmissionStrategy strategy = handler.handle(null, null, null, submission, HttpMethod.DELETE);
         strategy.deleteSubmission(submission);
         statisticsService.updateStatistics(submission, null);
         return ResponseEntity.ok().build();
@@ -137,7 +142,7 @@ public class SubmissionService {
 
         Submission submission = optional.get();
         setupChain();
-        SubmissionStrategy strategy = handler.handle(null, null, submission, HttpMethod.PUT);
+        SubmissionStrategy strategy = handler.handle(null, null, null, submission, HttpMethod.PUT);
         strategy.updateSubmission(submission, updatedSubmission);
         statisticsService.updateStatistics(submission, updatedSubmission);
         return ResponseEntity.ok().build();
@@ -173,7 +178,7 @@ public class SubmissionService {
             return ResponseEntity.status(404).build();
         }
         setupChain();
-        SubmissionStrategy strategy = handler.handle(null, null, submission.get(), HttpMethod.GET);
+        SubmissionStrategy strategy = handler.handle(null, null, null, submission.get(), HttpMethod.GET);
 
         return ResponseEntity.ok().body(strategy.getSubmission(submission.get()));
     }

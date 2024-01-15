@@ -107,6 +107,18 @@ public class SubmissionServiceTest {
     }
 
     @Test
+    void testDeleteSubmissionNoPermission() {
+        when(authManager.getEmail()).thenReturn("example@gmail.com");
+        when(httpRequestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(10L);
+        UUID id = submission.getId();
+        when(submissionRepository.findById(id)).thenReturn(Optional.of(submission));
+        Exception e = assertThrows(IllegalAccessException.class, () -> {
+            submissionService.delete(id);
+        });
+        assertEquals("You cannot delete a submission.", e.getMessage());
+    }
+
+    @Test
     void testDeleteSubmissionSuccess() throws Exception {
         UUID id = submission.getId();
         when(submissionRepository.findById(id)).thenReturn(Optional.of(submission));

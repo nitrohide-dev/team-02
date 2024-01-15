@@ -26,7 +26,9 @@ public class DeadlineValidator extends SubmissionValidator {
      * @param userId     user id that will be returned
      * @return long which changes depending on what has happened
      */
-    public SubmissionStrategy handle(SubmissionStrategy strategy, Long userId, Submission submission,
+    public SubmissionStrategy handle(SubmissionStrategy strategy,
+                                     Long userId, Long trackId,
+                                     Submission submission,
                                      HttpMethod requestType) throws DeadlinePassedException, IllegalAccessException {
 
         boolean beforeDeadline = strategy.checkDeadline(submission.getTrackId());
@@ -34,6 +36,6 @@ public class DeadlineValidator extends SubmissionValidator {
             throw new DeadlinePassedException("You cannot modify submission after the deadline.");
         }
 
-        return super.checkNext(strategy, userId, submission, requestType);
+        return super.checkNext(strategy, userId, trackId, submission, requestType);
     }
 }
