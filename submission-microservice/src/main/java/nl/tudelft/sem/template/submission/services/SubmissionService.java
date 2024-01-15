@@ -11,6 +11,7 @@ import nl.tudelft.sem.template.submission.components.chain.DeadlineValidator;
 import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
 import nl.tudelft.sem.template.submission.components.chain.UserValidator;
 import nl.tudelft.sem.template.submission.components.strategy.SubmissionStrategy;
+import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -20,7 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class SubmissionService {
@@ -72,8 +76,11 @@ public class SubmissionService {
                     paperType);
         }
 
+        String email = authManager.getEmail();
+        long userId = httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER);
+        
         submission.setId(UUID.randomUUID());
-        //  submission.setSubmittedBy(userId);
+        submission.setSubmittedBy(userId);
         submission.setCreated(LocalDateTime.now());
         submission.setUpdated(submission.getCreated());
         submission.setStatus(SubmissionStatus.OPEN);
