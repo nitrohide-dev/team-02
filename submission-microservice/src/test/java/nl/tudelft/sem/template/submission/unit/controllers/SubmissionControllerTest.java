@@ -122,4 +122,13 @@ public class SubmissionControllerTest {
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
+    @Test
+    void testDeleteSubmissionNoPermission() throws NotFoundException, DeadlinePassedException, IllegalAccessException {
+        UUID submissionId = UUID.randomUUID();
+        when(submissionService.delete(submissionId)).thenThrow(IllegalAccessException.class);
+        ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId);
+
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
 }

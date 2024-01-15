@@ -3,6 +3,7 @@ package nl.tudelft.sem.template.submission.unit.controllers;
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Statistics;
 import nl.tudelft.sem.template.submission.Application;
+import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.controllers.StatsController;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
@@ -69,11 +70,9 @@ public class StatsControllerTest {
     }
 
     @BeforeEach
-    void setup() throws NotFoundException, IllegalAccessException {
-        when(service.getStatistics(1L, 1L)).thenReturn(statistics1);
-        when(service.getStatistics(2L, 2L)).thenReturn(statistics2);
-        when(service.getStatistics(1L, 0L)).thenThrow(NotFoundException.class);
-        when(service.getStatistics(0L, 1L)).thenThrow(IllegalAccessException.class);
+    void setup() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
+        when(service.getStatistics(1L)).thenReturn(statistics1);
+        when(service.getStatistics(2L)).thenReturn(statistics2);
 
         when(repository.findAll()).thenReturn(List.of(statistics1, statistics2));
     }
@@ -86,25 +85,45 @@ public class StatsControllerTest {
 
     @Test
     void testTrackStatistics() {
-        ResponseEntity<Statistics> stats = controller.trackStatisticsGet(1L, 1L);
+        ResponseEntity<Statistics> stats = controller.trackStatisticsGet(1L);
         assertEquals(statistics1, stats.getBody());
     }
 
     @Test
     void testEventStatistics() {
-        ResponseEntity<Statistics> stats = controller.trackStatisticsGet(2L, 2L);
+        ResponseEntity<Statistics> stats = controller.eventStatisticsGet(2L);
         assertEquals(statistics2, stats.getBody());
     }
 
     @Test
-    void testNotFoundException() {
-        ResponseEntity<Statistics> out = controller.trackStatisticsGet(0L, 1L);
+    void testNotFoundExceptionTrack() throws NotFoundException, DeadlinePassedException, IllegalAccessException {
+        when(service.getStatistics(1L)).thenThrow(NotFoundException.class);
+        when(service.getStatistics(0L)).thenThrow(IllegalAccessException.class);
+        ResponseEntity<Statistics> out = controller.trackStatisticsGet(1L);
         assertEquals(HttpStatus.NOT_FOUND, out.getStatusCode());
     }
 
     @Test
-    void testIllegalAccessException() {
-        ResponseEntity<Statistics> out = controller.trackStatisticsGet(1L, 0L);
+    void testIllegalAccessExceptionTrack() throws NotFoundException, DeadlinePassedException, IllegalAccessException {
+        when(service.getStatistics(1L)).thenThrow(NotFoundException.class);
+        when(service.getStatistics(0L)).thenThrow(IllegalAccessException.class);
+        ResponseEntity<Statistics> out = controller.trackStatisticsGet(0L);
+        assertEquals(HttpStatus.UNAUTHORIZED, out.getStatusCode());
+    }
+
+    @Test
+    void testNotFoundExceptionEvent() throws NotFoundException, DeadlinePassedException, IllegalAccessException {
+        when(service.getStatistics(1L)).thenThrow(NotFoundException.class);
+        when(service.getStatistics(0L)).thenThrow(IllegalAccessException.class);
+        ResponseEntity<Statistics> out = controller.eventStatisticsGet(1L);
+        assertEquals(HttpStatus.NOT_FOUND, out.getStatusCode());
+    }
+
+    @Test
+    void testIllegalAccessExceptionEvent() throws NotFoundException, DeadlinePassedException, IllegalAccessException {
+        when(service.getStatistics(1L)).thenThrow(NotFoundException.class);
+        when(service.getStatistics(0L)).thenThrow(IllegalAccessException.class);
+        ResponseEntity<Statistics> out = controller.eventStatisticsGet(0L);
         assertEquals(HttpStatus.UNAUTHORIZED, out.getStatusCode());
     }
 }

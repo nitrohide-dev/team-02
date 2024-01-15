@@ -254,7 +254,7 @@ paths:
         - api_key: [ ]
       tags:
         - statistics
-  /stats/event/{eventId}/{userId}:
+  /stats/event/{eventId}:
     get:
       description: Get statistics of this event
       operationId: eventStatisticsGet
@@ -264,7 +264,6 @@ paths:
         - statistics
       parameters:
         - $ref: '#/components/parameters/EventId'
-        - $ref: '#/components/parameters/UserId'
       responses:
         '200':
           description: Statistics OK
@@ -275,7 +274,7 @@ paths:
         '400':
           description: Event not found
 
-  /stats/track/{trackId}/{userId}:
+  /stats/track/{trackId}:
     get:
       description: Get statistics of this track
       operationId: trackStatisticsGet
@@ -285,7 +284,6 @@ paths:
         - statistics
       parameters:
         - $ref: '#/components/parameters/TrackId'
-        - $ref: '#/components/parameters/UserId'
       responses:
         '200':
           description: Statistics OK
@@ -320,15 +318,6 @@ components:
       in: path
       required: true
       description: Id of the event
-      schema:
-        type: integer
-        format: int64
-      example: 1
-    UserId:
-      name: userId
-      in: path
-      required: true
-      description: Id of the user
       schema:
         type: integer
         format: int64

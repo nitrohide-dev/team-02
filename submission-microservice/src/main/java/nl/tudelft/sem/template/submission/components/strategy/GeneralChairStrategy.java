@@ -2,7 +2,6 @@ package nl.tudelft.sem.template.submission.components.strategy;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Statistics;
-import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
@@ -11,7 +10,7 @@ import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import java.util.Arrays;
 import java.util.List;
 
-public class GeneralChairStrategy implements StatisticsStrategy {
+public class GeneralChairStrategy implements SubmissionStrategy {
     private final StatisticsRepository statisticsRepository;
     private final HttpRequestService httpRequestService;
 
@@ -41,29 +40,21 @@ public class GeneralChairStrategy implements StatisticsStrategy {
         );
     }
 
-    public boolean checkDeadline(long trackId) {
-        return true;
-    }
-
-    public Submission getSubmission(long userId, Submission submission) {
-        return submission;
-    }
-
     /**
      * Returns statistics for a given event.
      *
-     * @param id event id
+     * @param track track
      * @return statistics
      * @throws NotFoundException if statistics for this event does not exist
      */
-    public Statistics getStatistics(Long id) throws NotFoundException {
+    public Statistics getStatistics(Track track) throws NotFoundException {
+        long id = track.getEventId();
         List<Track> tracks = getTracks(id);
 
         if (tracks.size() == 0) {
             throw new NotFoundException("Not Found - Statistics for a given event ID does not exist.");
         }
 
-        // long[] tracksIds = Arrays.stream(tracks).mapToLong(Track::getId).toArray();
         Long[] tracksIds = new Long[tracks.size()];
         for (int i = 0; i < tracksIds.length; i++) {
             tracksIds[i] = tracks.get(i).getId();
