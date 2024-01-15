@@ -3,6 +3,7 @@ package nl.tudelft.sem.template.submission.services;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import nl.tudelft.sem.template.submission.authentication.JwtTokenVerifier;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +20,14 @@ public class HttpRequestService {
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final JwtTokenVerifier jwtTokenVerifier;
+
     private final String userMicroserviceUrl = "http://localhost:8085/";
     private final String reviewMicroserviceUrl = "http://localhost:8082/";
+
+    public HttpRequestService(JwtTokenVerifier jwtTokenVerifier) {
+        this.jwtTokenVerifier = jwtTokenVerifier;
+    }
 
     public class BadResponseException extends RuntimeException {
         // Custom exception class for representing bad responses
@@ -60,6 +67,7 @@ public class HttpRequestService {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + jwtTokenVerifier.getLastEnteredToken())
                     .GET()
                     .build();
             String response = httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body();
@@ -89,6 +97,7 @@ public class HttpRequestService {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + jwtTokenVerifier.getLastEnteredToken())
                     .GET()
                     .build();
             String response = httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body();
