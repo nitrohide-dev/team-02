@@ -4,7 +4,6 @@ import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Statistics;
 import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.Application;
-import nl.tudelft.sem.template.submission.components.chain.UserValidator;
 import nl.tudelft.sem.template.submission.components.strategy.PcChairStrategy;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;

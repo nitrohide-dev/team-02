@@ -205,7 +205,8 @@ class UserValidatorTest {
         attendeeList.add(a);
         attendeeList.add(b);
         attendeeList.add(c);
-        when(httpRequestService.getList("attendee/" + submission.getTrackId(), Attendee.class, RequestType.USER)).thenReturn(attendeeList);
+        when(httpRequestService.getList("attendee/" + submission.getTrackId(),
+                Attendee.class, RequestType.USER)).thenReturn(attendeeList);
 
         IllegalAccessException e =  assertThrows(IllegalAccessException.class,
                 () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, HttpMethod.PUT));
