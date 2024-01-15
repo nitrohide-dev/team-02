@@ -13,5 +13,5 @@ public interface Validator {
                               Long userId, Long trackId,
                               Submission submission,
                               HttpMethod requestType)
-            throws DeadlinePassedException, IllegalAccessException;
+            throws Exception;
 }

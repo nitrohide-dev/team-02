@@ -47,7 +47,7 @@ public class SubmissionAuthorStrategy implements SubmissionStrategy {
         // need to change submission id to long !!!
         if (!submission.getStatus().equals(SubmissionStatus.OPEN)) {
             List<Comment> comments = httpRequestService.getList("/comments/" + userId + "/papers/" + submission.getId(),
-                    Comment.class, RequestType.REVIEW);
+                    Comment[].class, RequestType.REVIEW);
             List<String> commentsContent = new ArrayList<>();
             for (Comment comment : comments) {
                 commentsContent.add(comment.getDescription());

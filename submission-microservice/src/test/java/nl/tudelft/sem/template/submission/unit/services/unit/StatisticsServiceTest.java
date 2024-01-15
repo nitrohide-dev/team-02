@@ -1,10 +1,9 @@
-package nl.tudelft.sem.template.submission.unit.services;
+package nl.tudelft.sem.template.submission.unit.services.unit;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.*;
 import nl.tudelft.sem.template.submission.Application;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
-import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
 import nl.tudelft.sem.template.submission.models.Attendee;
 import nl.tudelft.sem.template.submission.models.RequestType;
@@ -28,7 +27,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -72,12 +71,13 @@ public class StatisticsServiceTest {
     private static Track track3;
 
     private static Submission submission;
+    private static long id = 0L;
 
     @BeforeAll
     static void generalSetup() {
-        generalChair = new Attendee(0L, 0L, 0L, Role.GENERAL_CHAIR);
-        pcChair1 = new Attendee(1L, 0L, 0L, Role.PC_CHAIR);
-        pcChair2 = new Attendee(2L, 0L, 1L, Role.PC_CHAIR);
+        generalChair = new Attendee(id, 0L, 0L, 0L, Role.GENERAL_CHAIR);
+        pcChair1 = new Attendee(id, 1L, 0L, 0L, Role.PC_CHAIR);
+        pcChair2 = new Attendee(id, 2L, 0L, 1L, Role.PC_CHAIR);
 
         track1 = new Track();
         track1.setId(0L);
@@ -90,7 +90,7 @@ public class StatisticsServiceTest {
         track3.setEventId(1L);
 
         submission = new Submission();
-        submission.setId(UUID.randomUUID());
+        submission.setId(new Random().nextLong());
         submission.setTrackId(0L);
         submission.setEventId(0L);
         submission.setAuthors(List.of(0L, 1L));
@@ -131,16 +131,16 @@ public class StatisticsServiceTest {
     }
 
     private void setupRequestService() {
-        when(requestService.getList("track/" + "eventId=0", Track.class, RequestType.USER))
+        when(requestService.getList("track/" + "eventId=0", Track[].class, RequestType.USER))
                 .thenReturn(List.of(track1, track2));
-        when(requestService.getList("track/" + "eventId=1", Track.class, RequestType.USER))
+        when(requestService.getList("track/" + "eventId=1", Track[].class, RequestType.USER))
                 .thenReturn(List.of());
 
-        when(requestService.getList("attendee/0", Attendee.class, RequestType.USER))
+        when(requestService.getList("attendee/0", Attendee[].class, RequestType.USER))
                 .thenReturn(List.of(generalChair, pcChair1));
-        when(requestService.getList("attendee/1", Attendee.class, RequestType.USER))
+        when(requestService.getList("attendee/1", Attendee[].class, RequestType.USER))
                 .thenReturn(List.of(generalChair, pcChair2));
-        when(requestService.getList("attendee/2", Attendee.class, RequestType.USER))
+        when(requestService.getList("attendee/2", Attendee[].class, RequestType.USER))
                 .thenReturn(List.of(generalChair));
     }
 
@@ -159,17 +159,17 @@ public class StatisticsServiceTest {
     }
 
     @Test
-    void testGetStatisticsPcChair() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        when(requestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(1L);
+    void testGetStatisticsPcChair() throws Exception {
+        when(requestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("1");
         assertEquals(trackStats1, service.getStatistics(0L));
 
-        when(requestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(2L);
+        when(requestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("2");
         assertEquals(trackStats2, service.getStatistics(1L));
     }
 
     @Test
-    void testGetStatisticsGeneralChair() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        when(requestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(0L);
+    void testGetStatisticsGeneralChair() throws Exception {
+        when(requestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("0");
         Statistics eventStats = service.getStatistics(0L);
         assertEquals(30L, eventStats.getTotalSubmissions());
         assertEquals(15L, eventStats.getAccepted());
@@ -179,7 +179,7 @@ public class StatisticsServiceTest {
 
     @Test
     void testNotFoundException() {
-        when(requestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(0L);
+        when(requestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("0");
         Exception e = assertThrows(NotFoundException.class, () -> {
             service.getStatistics(2L);
         });
@@ -189,7 +189,7 @@ public class StatisticsServiceTest {
 
     @Test
     void testIllegalAccessException() {
-        when(requestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(1L);
+        when(requestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("1");
         Exception e = assertThrows(IllegalAccessException.class, () -> {
             service.getStatistics(1L);
         });
