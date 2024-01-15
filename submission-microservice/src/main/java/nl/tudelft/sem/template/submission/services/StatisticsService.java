@@ -6,7 +6,7 @@ import nl.tudelft.sem.template.submission.authentication.AuthManager;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
 import nl.tudelft.sem.template.submission.components.chain.UserValidator;
-import nl.tudelft.sem.template.submission.components.strategy.SubmissionStrategy;
+import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
 import nl.tudelft.sem.template.submission.models.Attendee;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
@@ -82,7 +82,7 @@ public class StatisticsService {
     public Statistics getStatistics(long trackId) throws IllegalAccessException,
             NotFoundException, DeadlinePassedException {
         setupChain();
-        SubmissionStrategy strategy = handler.handle(null, null, trackId, null, HttpMethod.GET);
+        GeneralStrategy strategy = handler.handle(null, null, trackId, null, HttpMethod.GET);
 
         return strategy.getStatistics(trackService.getTrackById(trackId));
     }

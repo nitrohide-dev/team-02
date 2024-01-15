@@ -10,7 +10,7 @@ import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedExcepti
 import nl.tudelft.sem.template.submission.components.chain.DeadlineValidator;
 import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
 import nl.tudelft.sem.template.submission.components.chain.UserValidator;
-import nl.tudelft.sem.template.submission.components.strategy.SubmissionStrategy;
+import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
@@ -119,7 +119,7 @@ public class SubmissionService {
 
         Submission submission = deleted.get();
         setupChain();
-        SubmissionStrategy strategy = handler.handle(null, null, null, submission, HttpMethod.DELETE);
+        GeneralStrategy strategy = handler.handle(null, null, null, submission, HttpMethod.DELETE);
         strategy.deleteSubmission(submission);
         statisticsService.updateStatistics(submission, null);
         return ResponseEntity.ok().build();
@@ -142,7 +142,7 @@ public class SubmissionService {
 
         Submission submission = optional.get();
         setupChain();
-        SubmissionStrategy strategy = handler.handle(null, null, null, submission, HttpMethod.PUT);
+        GeneralStrategy strategy = handler.handle(null, null, null, submission, HttpMethod.PUT);
         strategy.updateSubmission(submission, updatedSubmission);
         statisticsService.updateStatistics(submission, updatedSubmission);
         return ResponseEntity.ok().build();
@@ -178,7 +178,7 @@ public class SubmissionService {
             return ResponseEntity.status(404).build();
         }
         setupChain();
-        SubmissionStrategy strategy = handler.handle(null, null, null, submission.get(), HttpMethod.GET);
+        GeneralStrategy strategy = handler.handle(null, null, null, submission.get(), HttpMethod.GET);
 
         return ResponseEntity.ok().body(strategy.getSubmission(submission.get()));
     }

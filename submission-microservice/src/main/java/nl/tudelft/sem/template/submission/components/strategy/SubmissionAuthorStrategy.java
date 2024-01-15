@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SubmissionAuthorStrategy implements SubmissionStrategy {
+public class SubmissionAuthorStrategy implements GeneralStrategy {
     private final SubmissionRepository submissionRepository;
     private final HttpRequestService httpRequestService;
     private final TrackService trackService;

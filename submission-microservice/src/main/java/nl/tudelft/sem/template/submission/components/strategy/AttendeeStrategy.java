@@ -2,7 +2,7 @@ package nl.tudelft.sem.template.submission.components.strategy;
 
 import nl.tudelft.sem.template.model.Submission;
 
-public class AttendeeStrategy implements SubmissionStrategy {
+public class AttendeeStrategy implements GeneralStrategy {
     public boolean checkDeadline(long trackId) {
         return true;
     }

@@ -7,7 +7,7 @@ import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 
 import java.util.Optional;
 
-public class PcChairStrategy implements SubmissionStrategy {
+public class PcChairStrategy implements GeneralStrategy {
     private final StatisticsRepository statisticsRepository;
 
     /**

@@ -79,10 +79,10 @@ public class UserValidator extends SubmissionValidator {
      * @param userId   user id that will be returned
      * @return long which changes depending on what has happened
      */
-    public SubmissionStrategy handle(SubmissionStrategy strategy,
-                                     Long userId, Long trackId,
-                                     Submission submission,
-                                     HttpMethod requestType) throws IllegalAccessException, DeadlinePassedException {
+    public GeneralStrategy handle(GeneralStrategy strategy,
+                                  Long userId, Long trackId,
+                                  Submission submission,
+                                  HttpMethod requestType) throws IllegalAccessException, DeadlinePassedException {
 
         String email = authManager.getEmail();
 

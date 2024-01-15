@@ -8,7 +8,7 @@ import nl.tudelft.sem.template.submission.services.TrackService;
 
 import java.time.LocalDateTime;
 
-public class SubmissionReviewerStrategy implements SubmissionStrategy {
+public class SubmissionReviewerStrategy implements GeneralStrategy {
     private final SubmissionRepository submissionRepository;
     private final TrackService trackService;
 
