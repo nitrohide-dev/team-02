@@ -1,11 +1,12 @@
-package nl.tudelft.sem.template.submission.unit.services;
+package nl.tudelft.sem.template.submission.unit.services.unit;
 
-import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
+import nl.tudelft.sem.template.submission.components.chain.DuplicateSubmissionException;
+import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.HttpRequestService;
@@ -50,12 +51,17 @@ public class SubmissionServiceTest {
     @InjectMocks
     private SubmissionService submissionService;
 
+    @Autowired
+    @InjectMocks
+    private SubmissionValidator validator;
+
     private Submission submission;
+    private Track mockTrack;
 
     @BeforeEach
     void setUp() {
         submission = new Submission();
-        submission.setId(UUID.randomUUID());
+        submission.setId(new Random().nextLong());
         submission.setCreated(LocalDateTime.now());
         submission.setUpdated(LocalDateTime.now());
         submission.setTitle("Paypuh titluh");
@@ -66,17 +72,18 @@ public class SubmissionServiceTest {
         submission.setTrackId(10L);
         submission.setType(PaperType.SHORT_PAPER);
         submission.setEventId(1L);
+
+        mockTrack = new Track();
+        mockTrack.setPaperType(submission.getType());
+        mockTrack.setSubmitDeadline("2024-05-15T23:59:59");
     }
 
     @Test
-    void testAddSubmission() throws DeadlinePassedException, IllegalAccessException {
-        //mocks the paperType
-        Track mockTrack = mock(Track.class);
-        when(mockTrack.getPaperType()).thenReturn(submission.getType());
+    void testAddSubmission() throws Exception {
 
         when(trackService.getTrackById(any(Long.class))).thenReturn(mockTrack);
         when(authManager.getEmail()).thenReturn("example@gmail.com");
-        when(httpRequestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(1L);
+        when(httpRequestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("1");
 
         when(submissionRepository.save(any(Submission.class))).thenReturn(submission);
         ResponseEntity<String> response = submissionService.add(submission);
@@ -86,18 +93,24 @@ public class SubmissionServiceTest {
     }
 
     @Test
-    void testAddDuplicateSubmission() throws DeadlinePassedException, IllegalAccessException {
+    void testAddDuplicateSubmission() throws Exception {
+        when(trackService.getTrackById(any(Long.class))).thenReturn(mockTrack);
+        when(authManager.getEmail()).thenReturn("example@gmail.com");
+        when(httpRequestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("1");
         when(submissionRepository.findAll())
                 .thenReturn(Collections.singletonList(submission));
 
-        ResponseEntity<String> response = submissionService.add(submission);
+        Exception e = assertThrows(DuplicateSubmissionException.class,
+                () -> {
+                    submissionService.add(submission);
+                });
 
-        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals("A submission with such a title already exists in this event!", e.getMessage());
     }
 
     @Test
-    void testDeleteSubmissionNotFound() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        UUID id = UUID.randomUUID();
+    void testDeleteSubmissionNotFound() throws Exception {
+        Long id = new Random().nextLong();
         when(submissionRepository.findById(id)).thenReturn(Optional.empty());
 
         ResponseEntity<Void> response = submissionService.delete(id);
@@ -109,8 +122,8 @@ public class SubmissionServiceTest {
     @Test
     void testDeleteSubmissionNoPermission() {
         when(authManager.getEmail()).thenReturn("example@gmail.com");
-        when(httpRequestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(10L);
-        UUID id = submission.getId();
+        when(httpRequestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("10");
+        Long id = new Random().nextLong();
         when(submissionRepository.findById(id)).thenReturn(Optional.of(submission));
         Exception e = assertThrows(IllegalAccessException.class, () -> {
             submissionService.delete(id);
@@ -120,10 +133,10 @@ public class SubmissionServiceTest {
 
     @Test
     void testDeleteSubmissionSuccess() throws Exception {
-        UUID id = submission.getId();
+        Long id = new Random().nextLong();
         when(submissionRepository.findById(id)).thenReturn(Optional.of(submission));
         when(authManager.getEmail()).thenReturn("example@gmail.com");
-        when(httpRequestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(1L);
+        when(httpRequestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("1");
         Track track = new Track();
         track.setSubmitDeadline("2024-02-06T23:59:59");
         when(trackService.getTrackById(10L)).thenReturn(track);
@@ -136,7 +149,7 @@ public class SubmissionServiceTest {
 
     @Test
     void testUpdateSubmissionNotFound() throws Exception {
-        UUID id = UUID.randomUUID();
+        Long id = new Random().nextLong();
         Submission updatedSubmission = new Submission();
         when(submissionRepository.findById(id)).thenReturn(Optional.empty());
 
@@ -148,11 +161,11 @@ public class SubmissionServiceTest {
 
     @Test
     void testUpdateSubmissionSuccess() throws Exception {
-        UUID id = submission.getId();
+        Long id = new Random().nextLong();
 
         when(submissionRepository.findById(id)).thenReturn(Optional.of(submission));
         when(authManager.getEmail()).thenReturn("example@gmail.com");
-        when(httpRequestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(1L);
+        when(httpRequestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("1");
         Track track = new Track();
         track.setSubmitDeadline("2024-02-06T23:59:59");
         when(trackService.getTrackById(10L)).thenReturn(track);
@@ -281,7 +294,7 @@ public class SubmissionServiceTest {
         Track mockTrack = mock(Track.class);
         when(mockTrack.getPaperType()).thenReturn(submission.getType());
         when(trackService.getTrackById(any(Long.class))).thenReturn(mockTrack);
-        String result = submissionService.checkPaperType(submission);
+        String result = validator.checkPaperType(submission);
         assertEquals(result, null);
     }
 
@@ -290,7 +303,7 @@ public class SubmissionServiceTest {
         Track mockTrack = mock(Track.class);
         when(mockTrack.getPaperType()).thenReturn(PaperType.FULL_PAPER);
         when(trackService.getTrackById(any(Long.class))).thenReturn(mockTrack);
-        String result = submissionService.checkPaperType(submission);
+        String result = validator.checkPaperType(submission);
         assertEquals(result, "You submitted a paper of incorrect type. The correct type is "
                 + PaperType.FULL_PAPER.toString());
     }

@@ -2,7 +2,6 @@ package nl.tudelft.sem.template.submission.unit.controllers;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Submission;
-import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
@@ -23,7 +22,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -71,7 +70,7 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testAddSubmission() throws DeadlinePassedException, IllegalAccessException {
+    void testAddSubmission() throws Exception {
         when(submissionService.add(any(Submission.class))).thenReturn(ResponseEntity.ok("Submission Added"));
         ResponseEntity<String> response = submissionController.addSubmission(submissionData, mockFile);
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -79,8 +78,8 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testDeleteSubmission() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        UUID submissionId = UUID.randomUUID();
+    void testDeleteSubmission() throws Exception {
+        Long submissionId = new Random().nextLong();
         when(submissionService.delete(submissionId)).thenReturn(ResponseEntity.ok().build());
 
         ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId);
@@ -102,16 +101,16 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testDeleteSubmissionNotFoundException() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        UUID submissionId = UUID.randomUUID();
+    void testDeleteSubmissionNotFoundException() throws Exception {
+        Long submissionId = new Random().nextLong();
         when(submissionService.delete(submissionId)).thenThrow(new NotFoundException("Not found"));
         ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
     @Test
-    void testUpdateSubmission_NotFoundException() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
-        UUID submissionId = UUID.randomUUID();
+    void testUpdateSubmission_NotFoundException() throws Exception {
+        Long submissionId = new Random().nextLong();
         Submission updatedSubmission = new Submission();
         when(submissionService.update(submissionId, updatedSubmission))
                 .thenThrow(new NotFoundException("Not Found"));
@@ -123,8 +122,8 @@ public class SubmissionControllerTest {
     }
 
     @Test
-    void testDeleteSubmissionNoPermission() throws NotFoundException, DeadlinePassedException, IllegalAccessException {
-        UUID submissionId = UUID.randomUUID();
+    void testDeleteSubmissionNoPermission() throws Exception {
+        Long submissionId = new Random().nextLong();
         when(submissionService.delete(submissionId)).thenThrow(IllegalAccessException.class);
         ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId);
 
