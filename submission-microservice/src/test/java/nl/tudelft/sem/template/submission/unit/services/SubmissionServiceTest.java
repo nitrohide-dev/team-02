@@ -73,7 +73,10 @@ public class SubmissionServiceTest {
         //mocks the paperType
         Track mockTrack = mock(Track.class);
         when(mockTrack.getPaperType()).thenReturn(submission.getType());
+
         when(trackService.getTrackById(any(Long.class))).thenReturn(mockTrack);
+        when(authManager.getEmail()).thenReturn("example@gmail.com");
+        when(httpRequestService.get("user/byEmail/example@gmail.com", Long.class, RequestType.USER)).thenReturn(1L);
 
         when(submissionRepository.save(any(Submission.class))).thenReturn(submission);
         ResponseEntity<String> response = submissionService.add(submission);
