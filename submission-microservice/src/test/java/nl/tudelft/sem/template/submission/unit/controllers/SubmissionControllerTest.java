@@ -1,6 +1,7 @@
 package nl.tudelft.sem.template.submission.unit.controllers;
 
 import javassist.NotFoundException;
+import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
@@ -23,10 +25,13 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +41,9 @@ public class SubmissionControllerTest {
 
     @Mock
     private SubmissionRepository submissionRepository;
+
+    @MockBean
+    Files files;
 
     @InjectMocks
     private SubmissionController submissionController;
@@ -131,4 +139,150 @@ public class SubmissionControllerTest {
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
 
+
+    //    How to make a file corrupt/unreadable?
+    //
+    //    @Test
+    //    void testSaveFileException() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+    //        mockFile = new MockMultipartFile(
+    //                "/",
+    //                "/",
+    //                "",
+    //                "/".getBytes()
+    //        );
+    //        Method saveFileMethod = SubmissionController.class.getDeclaredMethod("saveFile", MultipartFile.class);
+    //        saveFileMethod.setAccessible(true);
+    //
+    //        assertThrows(IOException.class, () -> {
+    //            try {
+    //                saveFileMethod.invoke(submissionController, mockFile);
+    //            } catch (InvocationTargetException e) {
+    //                throw e.getTargetException();
+    //            }
+    //        });
+    //    }
+
+    @Test
+    void testAddSubmissionBadResponse() {
+        mockFile = new MockMultipartFile(
+                "/",
+                "/",
+                "",
+                "/".getBytes()
+        );
+        ResponseEntity<String> response = submissionController.addSubmission(submissionData, mockFile);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNull(response.getBody());
+    }
+
+    @Test
+    void testDeleteSubmissionDeadlinePassedException()
+            throws NotFoundException, IllegalAccessException, DeadlinePassedException {
+        UUID submissionId = UUID.randomUUID();
+        when(submissionService.delete(submissionId)).thenThrow(new DeadlinePassedException("Deadline has passed."));
+        ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void testGetSubmissionByIdReturnsSubmission() throws DeadlinePassedException, IllegalAccessException {
+        UUID submissionId = UUID.randomUUID();
+        ResponseEntity<Submission> expectedResponse = ResponseEntity.ok(new Submission());
+
+        when(submissionService.getById(submissionId)).thenReturn(expectedResponse);
+
+        ResponseEntity<Submission> result = submissionController.getSubmissionById(submissionId);
+
+        assertEquals(expectedResponse, result);
+        verify(submissionService).getById(submissionId);
+    }
+
+    @Test
+    void testGetSubmissionByIdBadRequest() throws DeadlinePassedException, IllegalAccessException {
+        UUID submissionId = UUID.randomUUID();
+
+        when(submissionService.getById(submissionId)).thenThrow(IllegalArgumentException.class);
+
+        ResponseEntity<Submission> result = submissionController.getSubmissionById(submissionId);
+
+        assertEquals(400, result.getStatusCodeValue());
+    }
+
+    @Test
+    void testGetSubmissionByIdUnauthorized() throws DeadlinePassedException, IllegalAccessException {
+        UUID submissionId = UUID.randomUUID();
+
+        when(submissionService.getById(submissionId)).thenThrow(IllegalAccessException.class);
+
+        ResponseEntity<Submission> result = submissionController.getSubmissionById(submissionId);
+
+        assertEquals(401, result.getStatusCodeValue());
+    }
+
+    @Test
+    void testUpdateSubmissionIllegalAccessException()
+            throws NotFoundException, IllegalAccessException, DeadlinePassedException {
+        UUID submissionId = UUID.randomUUID();
+        Submission updatedSubmission = new Submission();
+        when(submissionService.update(submissionId, updatedSubmission))
+                .thenThrow(new IllegalAccessException("This is illegal."));
+
+        ResponseEntity<Submission> response = submissionController.submissionSubmissionIdPut(submissionId,
+                updatedSubmission);
+
+        assertEquals(401, response.getStatusCodeValue());
+    }
+
+    @Test
+    void testUpdateSubmissionDeadlinePassedException()
+            throws NotFoundException, IllegalAccessException, DeadlinePassedException {
+        UUID submissionId = UUID.randomUUID();
+        Submission updatedSubmission = new Submission();
+        when(submissionService.update(submissionId, updatedSubmission))
+                .thenThrow(new DeadlinePassedException("It's over."));
+
+        ResponseEntity<Submission> response = submissionController.submissionSubmissionIdPut(submissionId,
+                updatedSubmission);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void testUpdateSubmissionSuccess() throws NotFoundException, IllegalAccessException, DeadlinePassedException {
+        UUID submissionId = UUID.randomUUID();
+        Submission updatedSubmission = new Submission();
+        when(submissionService.update(submissionId, updatedSubmission))
+                .thenReturn(new ResponseEntity<Submission>(HttpStatus.ACCEPTED));
+
+        ResponseEntity<Submission> response = submissionController.submissionSubmissionIdPut(submissionId,
+                updatedSubmission);
+
+        assertEquals(HttpStatus.ACCEPTED, response.getStatusCode());
+    }
+
+    @Test
+    void testSubmissionGetResponse() {
+        Long submittedBy = 123L;
+        List<Long> authors = new ArrayList<>();
+        authors.add(456L);
+        String title = "Sample Title";
+        List<String> keywords = new ArrayList<>();
+        keywords.add("keyword1");
+        Long trackId = 789L;
+        Long eventId = 987L;
+        PaperType type = PaperType.FULL_PAPER;
+        ResponseEntity<List<Submission>> expectedResponse = ResponseEntity.ok(new ArrayList<>());
+        when(submissionService.get(submittedBy, authors, title, keywords, trackId, eventId, type))
+                .thenReturn(expectedResponse);
+        ResponseEntity<List<Submission>> result = submissionController.submissionGet(submittedBy, authors, title,
+                keywords, trackId, eventId, type);
+        assertEquals(expectedResponse, result);
+        verify(submissionService).get(submittedBy, authors, title, keywords, trackId, eventId, type);
+    }
 }
+
+
+
+
+
+
