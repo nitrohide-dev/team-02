@@ -196,7 +196,8 @@ public class SubmissionServiceTest {
         duplicateSubmission.setTitle("Duplicate Title");
         Submission duplicateSubmission2 = new Submission();
         duplicateSubmission2.setTitle("Duplicate Title");
-        when(submissionRepository.findAllMatching(null, null, "Duplicate Title", null, null, null, null)).thenReturn(List.of(duplicateSubmission2));
+        when(submissionRepository.findAllMatching(null, null, "Duplicate Title", null, null, null, null))
+                .thenReturn(List.of(duplicateSubmission2));
 
         boolean result = submissionService.checkDuplicateSubmissions(duplicateSubmission);
 
@@ -228,70 +229,6 @@ public class SubmissionServiceTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertFalse(response.getBody().isEmpty());
     }
-
-//    @Test
-//    void testGetWithSpecificEventId() throws DeadlinePassedException, IllegalAccessException {
-//        //Only eventId
-//        Long eventId = 1L;
-//        when(submissionRepository.findAllMatching(null, null,
-//                null, null, null, eventId, null))
-//                .thenReturn(Collections.singletonList(submission));
-//
-//        ResponseEntity<List<Submission>> response = submissionService.get(null, null,
-//                null, null, null, eventId, null);
-//
-//        assertEquals(HttpStatus.OK, response.getStatusCode());
-//        assertFalse(response.getBody().isEmpty());
-//    }
-
-//    @Test
-//    void testGetWithTrackId() throws DeadlinePassedException, IllegalAccessException {
-//        Long trackId = 10L;
-//        when(submissionRepository.findAll())
-//                .thenReturn(Collections.singletonList(submission));
-//        ResponseEntity<List<Submission>> response = submissionService.get(
-//                null, null, null, null, trackId, null, null);
-//
-//        assertEquals(HttpStatus.OK, response.getStatusCode());
-//        assertFalse(response.getBody().isEmpty());
-//    }
-//
-//    @Test
-//    void testGetWithKeywords() throws DeadlinePassedException, IllegalAccessException {
-//        List<String> keywords = Arrays.asList("Keyword1", "Keyword2");
-//        when(submissionRepository.findAll())
-//                .thenReturn(Collections.singletonList(submission));
-//        ResponseEntity<List<Submission>> response = submissionService.get(null,
-//                null, null, keywords, null, null, null);
-//
-//        assertEquals(HttpStatus.OK, response.getStatusCode());
-//        assertFalse(response.getBody().isEmpty());
-//    }
-//
-//    @Test
-//    void testGetWithSubmittedBy() {
-//        Long submittedBy = 1L;
-//        submission.setSubmittedBy(1L);
-//        when(submissionRepository.findAll())
-//                .thenReturn(Collections.singletonList(submission));
-//        ResponseEntity<List<Submission>> response = submissionService.get(submittedBy,
-//                null, null, null, null, null, null);
-//
-//        assertEquals(HttpStatus.OK, response.getStatusCode());
-//        assertFalse(response.getBody().isEmpty());
-//    }
-//
-//    @Test
-//    void testGetWithAuthors() {
-//        List<Long> authors = Arrays.asList(1L, 2L);
-//        when(submissionRepository.findAll())
-//                .thenReturn(Collections.singletonList(submission));
-//        ResponseEntity<List<Submission>> response = submissionService.get(null,
-//                authors, null, null, null, null, null);
-//
-//        assertEquals(HttpStatus.OK, response.getStatusCode());
-//        assertFalse(response.getBody().isEmpty());
-//    }
 
     @Test
     void checkPaperTypeCorrect() {
