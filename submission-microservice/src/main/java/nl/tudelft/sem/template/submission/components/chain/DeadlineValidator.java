@@ -27,9 +27,9 @@ public class DeadlineValidator extends BaseValidator {
      * @return long which changes depending on what has happened
      */
     public GeneralStrategy handle(GeneralStrategy strategy,
-                                     Long userId, Long trackId,
-                                     Submission submission,
-                                     HttpMethod requestType) throws Exception {
+                                  Long userId, Long trackId,
+                                  Submission submission,
+                                  HttpMethod requestType) throws Exception {
 
         boolean beforeDeadline = strategy.checkDeadline(submission.getTrackId());
         if ((requestType.equals(HttpMethod.PUT) || requestType.equals(HttpMethod.POST)) && !beforeDeadline) {

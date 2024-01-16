@@ -3,6 +3,8 @@ package nl.tudelft.sem.template.submission.unit.components.chain;
 import nl.tudelft.sem.template.model.Role;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.Application;
+import nl.tudelft.sem.template.submission.authentication.AuthManager;
+import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.components.chain.UserValidator;
 import nl.tudelft.sem.template.submission.components.strategy.AttendeeStrategy;
 import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
@@ -25,16 +27,15 @@ import org.springframework.http.HttpMethod;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import nl.tudelft.sem.template.submission.authentication.AuthManager;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith({SpringExtension.class, MockitoExtension.class})
 @SpringBootTest(classes = Application.class)
@@ -86,8 +87,8 @@ class UserValidatorTest {
                         + "&role=sub_reviewer",
                 Attendee[].class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
 
-        IllegalAccessException e =  assertThrows(IllegalAccessException.class,
-            () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, requestType));
+        IllegalAccessException e = assertThrows(IllegalAccessException.class,
+                () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, requestType));
         assertEquals(e.getMessage(), "You cannot delete a submission.");
 
     }
@@ -99,7 +100,7 @@ class UserValidatorTest {
                         + "&role=sub_reviewer",
                 Attendee[].class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
 
-        IllegalAccessException e =  assertThrows(IllegalAccessException.class,
+        IllegalAccessException e = assertThrows(IllegalAccessException.class,
                 () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, requestType));
         assertEquals(e.getMessage(), "You cannot modify a submission.");
 
@@ -154,7 +155,7 @@ class UserValidatorTest {
                         + "&role=sub_reviewer",
                 Attendee[].class, RequestType.USER)).thenReturn(attendeeList);
 
-        IllegalAccessException e =  assertThrows(IllegalAccessException.class,
+        IllegalAccessException e = assertThrows(IllegalAccessException.class,
                 () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, HttpMethod.PUT));
         assertEquals(e.getMessage(), "You cannot modify a submission.");
 
@@ -181,7 +182,7 @@ class UserValidatorTest {
     }
 
     @Test
-    void submissionIsNullTest() throws IllegalAccessException, DeadlinePassedException {
+    void submissionIsNullTest() {
         String email = "author@example.com";
         when(authManager.getEmail()).thenReturn(email);
         when(httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER)).thenReturn(userId);
@@ -201,13 +202,11 @@ class UserValidatorTest {
                         + "&role=sub_reviewer",
                 Attendee[].class, RequestType.USER)).thenReturn(attendeeList);
 
-        IllegalAccessException e =  assertThrows(IllegalAccessException.class,
+        IllegalAccessException e = assertThrows(IllegalAccessException.class,
                 () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, HttpMethod.PUT));
         assertEquals(e.getMessage(), "You cannot modify a submission.");
 
     }
-
-
 
 
 }

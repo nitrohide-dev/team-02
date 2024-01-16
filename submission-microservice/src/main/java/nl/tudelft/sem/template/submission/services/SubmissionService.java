@@ -3,8 +3,8 @@ package nl.tudelft.sem.template.submission.services;
 import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
-import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
 import nl.tudelft.sem.template.submission.components.chain.*;
+import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,6 @@ public class SubmissionService {
     private final SubmissionRepository submissionRepository;
     private final StatisticsService statisticsService;
     private final StatisticsRepository statisticsRepository;
-    private final TrackService trackService;
     private final HttpRequestService httpRequestService;
     private final AuthManager authManager;
     private BaseValidator handler;
@@ -37,13 +36,11 @@ public class SubmissionService {
     public SubmissionService(SubmissionRepository submissionRepository,
                              StatisticsService statisticsService,
                              StatisticsRepository statisticsRepository,
-                             TrackService trackService,
                              HttpRequestService httpRequestService,
                              AuthManager authManager) {
         this.submissionRepository = submissionRepository;
         this.statisticsService = statisticsService;
         this.statisticsRepository = statisticsRepository;
-        this.trackService = trackService;
         this.httpRequestService = httpRequestService;
         this.authManager = authManager;
     }
@@ -51,9 +48,9 @@ public class SubmissionService {
     private void setupChain(boolean addThirdStage) {
         DeadlineValidator deadlineValidator = new DeadlineValidator(httpRequestService);
         if (addThirdStage) {
-            deadlineValidator.setNext(new SubmissionValidator(trackService));
+            deadlineValidator.setNext(new SubmissionValidator(httpRequestService));
         }
-        handler = new UserValidator(submissionRepository, statisticsRepository, httpRequestService, trackService,
+        handler = new UserValidator(submissionRepository, statisticsRepository, httpRequestService,
                 authManager);
         handler.setNext(deadlineValidator);
     }

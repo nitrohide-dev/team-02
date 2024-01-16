@@ -12,7 +12,6 @@ import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import nl.tudelft.sem.template.submission.services.StatisticsService;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
-import nl.tudelft.sem.template.submission.services.TrackService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,9 +36,6 @@ public class SubmissionServiceTest {
 
     @Mock
     private StatisticsService statisticsService;
-
-    @Mock
-    private TrackService trackService;
 
     @Mock
     private HttpRequestService httpRequestService;
@@ -80,8 +76,7 @@ public class SubmissionServiceTest {
 
     @Test
     void testAddSubmission() throws Exception {
-
-        when(trackService.getTrackById(any(Long.class))).thenReturn(mockTrack);
+        when(httpRequestService.get("track/10", Track.class, RequestType.USER)).thenReturn(mockTrack);
         when(authManager.getEmail()).thenReturn("example@gmail.com");
         when(httpRequestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("1");
 
@@ -94,7 +89,7 @@ public class SubmissionServiceTest {
 
     @Test
     void testAddDuplicateSubmission() throws Exception {
-        when(trackService.getTrackById(any(Long.class))).thenReturn(mockTrack);
+        when(httpRequestService.get("track/10", Track.class, RequestType.USER)).thenReturn(mockTrack);
         when(authManager.getEmail()).thenReturn("example@gmail.com");
         when(httpRequestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("1");
         when(submissionRepository.findAll())
@@ -139,7 +134,7 @@ public class SubmissionServiceTest {
         when(httpRequestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("1");
         Track track = new Track();
         track.setSubmitDeadline("2024-02-06T23:59:59");
-        when(trackService.getTrackById(10L)).thenReturn(track);
+        when(httpRequestService.get("track/10", Track.class, RequestType.USER)).thenReturn(track);
 
         ResponseEntity<Void> response = submissionService.delete(id);
 
@@ -168,7 +163,7 @@ public class SubmissionServiceTest {
         when(httpRequestService.getAttribute("user/byEmail/example@gmail.com", RequestType.USER, "id")).thenReturn("1");
         Track track = new Track();
         track.setSubmitDeadline("2024-02-06T23:59:59");
-        when(trackService.getTrackById(10L)).thenReturn(track);
+        when(httpRequestService.get("track/10", Track.class, RequestType.USER)).thenReturn(track);
 
         Submission updatedSubmission = new Submission();
         ResponseEntity<Submission> response = submissionService.update(id, updatedSubmission);
@@ -291,18 +286,18 @@ public class SubmissionServiceTest {
 
     @Test
     void checkPaperTypeCorrect() {
-        Track mockTrack = mock(Track.class);
-        when(mockTrack.getPaperType()).thenReturn(submission.getType());
-        when(trackService.getTrackById(any(Long.class))).thenReturn(mockTrack);
+        Track mockTrack = new Track();
+        mockTrack.setPaperType(submission.getType());
+        when(httpRequestService.get("track/10", Track.class, RequestType.USER)).thenReturn(mockTrack);
         String result = validator.checkPaperType(submission);
         assertEquals(result, null);
     }
 
     @Test
     void checkPaperTypeIncorrect() {
-        Track mockTrack = mock(Track.class);
-        when(mockTrack.getPaperType()).thenReturn(PaperType.FULL_PAPER);
-        when(trackService.getTrackById(any(Long.class))).thenReturn(mockTrack);
+        Track mockTrack = new Track();
+        mockTrack.setPaperType(PaperType.FULL_PAPER);
+        when(httpRequestService.get("track/10", Track.class, RequestType.USER)).thenReturn(mockTrack);
         String result = validator.checkPaperType(submission);
         assertEquals(result, "You submitted a paper of incorrect type. The correct type is "
                 + PaperType.FULL_PAPER.toString());

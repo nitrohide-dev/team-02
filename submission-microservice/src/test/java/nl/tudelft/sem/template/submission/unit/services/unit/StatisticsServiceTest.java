@@ -11,7 +11,6 @@ import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import nl.tudelft.sem.template.submission.services.StatisticsService;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
-import nl.tudelft.sem.template.submission.services.TrackService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,9 +47,6 @@ public class StatisticsServiceTest {
 
     @MockBean
     private HttpRequestService requestService;
-
-    @MockBean
-    private TrackService trackService;
 
     @MockBean
     private AuthManager authManager;
@@ -125,9 +121,9 @@ public class StatisticsServiceTest {
     }
 
     private void setupTrackService() {
-        when(trackService.getTrackById(0L)).thenReturn(track1);
-        when(trackService.getTrackById(1L)).thenReturn(track2);
-        when(trackService.getTrackById(2L)).thenReturn(track3);
+        when(requestService.get("track/0", Track.class, RequestType.USER)).thenReturn(track1);
+        when(requestService.get("track/1", Track.class, RequestType.USER)).thenReturn(track2);
+        when(requestService.get("track/2", Track.class, RequestType.USER)).thenReturn(track3);
     }
 
     private void setupRequestService() {

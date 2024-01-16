@@ -7,10 +7,10 @@ import nl.tudelft.sem.template.submission.Application;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.components.strategy.SubmissionReviewerStrategy;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
+import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
+import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
-import nl.tudelft.sem.template.submission.services.TrackService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,11 +18,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.stereotype.Component;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
 import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -38,7 +39,7 @@ public class SubmissionReviewerStrategyTest {
     @MockBean
     private SubmissionRepository submissionRepository;
     @MockBean
-    private TrackService trackService;
+    private HttpRequestService httpRequestService;
 
     @Autowired
     @InjectMocks
@@ -50,7 +51,7 @@ public class SubmissionReviewerStrategyTest {
         track.setReviewDeadline("1968-01-01T00:00:00");
         track.setSubmitDeadline("1968-01-01T00:00:00");
 
-        when(trackService.getTrackById(anyLong())).thenReturn(track);
+        when(httpRequestService.get("track/123", Track.class, RequestType.USER)).thenReturn(track);
 
         boolean result = submissionReviewerStrategy.checkDeadline(123L);
         assertFalse(result);
@@ -62,7 +63,7 @@ public class SubmissionReviewerStrategyTest {
         track.setReviewDeadline("2026-01-01T00:00:00");
         track.setSubmitDeadline("2026-01-01T00:00:00");
 
-        when(trackService.getTrackById(anyLong())).thenReturn(track);
+        when(httpRequestService.get("track/198", Track.class, RequestType.USER)).thenReturn(track);
 
         boolean result = submissionReviewerStrategy.checkDeadline(198L);
         assertFalse(result);
@@ -74,7 +75,7 @@ public class SubmissionReviewerStrategyTest {
         track.setReviewDeadline("2026-01-01T00:00:00");
         track.setSubmitDeadline("1968-01-01T00:00:00");
 
-        when(trackService.getTrackById(anyLong())).thenReturn(track);
+        when(httpRequestService.get("track/422", Track.class, RequestType.USER)).thenReturn(track);
 
         boolean result = submissionReviewerStrategy.checkDeadline(422L);
         assertTrue(result);

@@ -3,12 +3,14 @@ package nl.tudelft.sem.template.submission.components.chain;
 
 import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
-import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
 import nl.tudelft.sem.template.model.SubmissionStatus;
 import nl.tudelft.sem.template.model.Track;
-import nl.tudelft.sem.template.submission.services.TrackService;
+import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
+import nl.tudelft.sem.template.submission.models.RequestType;
+import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import org.springframework.http.HttpMethod;
 
+import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,10 +18,10 @@ import java.util.List;
 import java.util.Random;
 
 public class SubmissionValidator extends BaseValidator {
-    private final TrackService trackService;
+    private final HttpRequestService httpRequestService;
 
-    public SubmissionValidator(TrackService trackService) {
-        this.trackService = trackService;
+    public SubmissionValidator(HttpRequestService httpRequestService) {
+        this.httpRequestService = httpRequestService;
     }
 
     /**
@@ -33,7 +35,7 @@ public class SubmissionValidator extends BaseValidator {
      * @return strategy used
      */
     public GeneralStrategy handle(GeneralStrategy strategy, Long userId, Long trackId,
-                                     Submission submission, HttpMethod requestType) {
+                                  Submission submission, HttpMethod requestType) throws IOException, InterruptedException {
 
         String paperType = checkPaperType(submission);
         if (paperType != null || submission.getTrackId() == null) {
@@ -41,7 +43,9 @@ public class SubmissionValidator extends BaseValidator {
         }
 
         if (submission.getEventId() == null) {
-            submission.setEventId(trackService.getTrackById(submission.getTrackId()).getEventId());
+            submission.setEventId(httpRequestService.get("track/" + trackId,
+                    Track.class,
+                    RequestType.USER).getEventId());
         }
         submission.setId(new Random().nextLong());
         submission.setSubmittedBy(userId);
@@ -66,7 +70,9 @@ public class SubmissionValidator extends BaseValidator {
      * @return returns null if there's no conflict, otherwise returns message specifying required type
      */
     public String checkPaperType(Submission submission) {
-        Track track = trackService.getTrackById(submission.getTrackId());
+        Track track = httpRequestService.get("track/" + submission.getTrackId(),
+                Track.class,
+                RequestType.USER);
         PaperType paperType = track.getPaperType();
         String incorrectType = "You submitted a paper of incorrect type. The correct type is " + paperType.toString();
         if (paperType.equals(submission.getType())) {
