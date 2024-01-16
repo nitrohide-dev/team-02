@@ -33,7 +33,6 @@ public class UserValidator extends BaseValidator {
         this.submissionRepository = submissionRepository;
         this.statisticsRepository = statisticsRepository;
         this.httpRequestService = httpRequestService;
-        ;
         this.authManager = authManager;
     }
 
@@ -55,15 +54,16 @@ public class UserValidator extends BaseValidator {
                     return Role.SUB_REVIEWER;
                 }
             }
-        }
+        } else {
 
-        List<Attendee> chairsList = httpRequestService.getList("attendee/" + trackId, Attendee[].class, RequestType.USER);
-        for (Attendee c : chairsList) {
-            if (c.getUserId() == userId && c.getRole().equals(Role.GENERAL_CHAIR)) {
-                return Role.GENERAL_CHAIR;
-            }
-            if (c.getUserId() == userId && c.getRole().equals(Role.PC_CHAIR)) {
-                return Role.PC_CHAIR;
+            List<Attendee> chairsList = httpRequestService.getList("attendee/" + trackId, Attendee[].class, RequestType.USER);
+            for (Attendee c : chairsList) {
+                if (c.getUserId() == userId && c.getRole().equals(Role.GENERAL_CHAIR)) {
+                    return Role.GENERAL_CHAIR;
+                }
+                if (c.getUserId() == userId && c.getRole().equals(Role.PC_CHAIR)) {
+                    return Role.PC_CHAIR;
+                }
             }
         }
 
@@ -88,7 +88,6 @@ public class UserValidator extends BaseValidator {
         if (requestType.equals(HttpMethod.POST)) {
             role = Role.AUTHOR;
         }
-        System.out.println(role);
 
         if (requestType.equals(HttpMethod.DELETE) && !role.equals(Role.AUTHOR)) {
             throw new IllegalAccessException("You cannot delete a submission.");
@@ -101,6 +100,13 @@ public class UserValidator extends BaseValidator {
             throw new IllegalAccessException("User has not enough permissions to get statistics.");
         }
 
+        strategy = getStrategy(userId, role);
+
+        return super.checkNext(strategy, userId, trackId, submission, requestType);
+    }
+
+    private GeneralStrategy getStrategy(Long userId, Role role) {
+        GeneralStrategy strategy;
         switch (role) {
             case AUTHOR -> {
                 strategy = new SubmissionAuthorStrategy(submissionRepository, httpRequestService, userId);
@@ -119,7 +125,6 @@ public class UserValidator extends BaseValidator {
                 strategy = new AttendeeStrategy();
             }
         }
-
-        return super.checkNext(strategy, userId, trackId, submission, requestType);
+        return strategy;
     }
 }

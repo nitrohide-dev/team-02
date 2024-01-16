@@ -1,5 +1,6 @@
 package nl.tudelft.sem.template.submission.services;
 
+import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
@@ -14,9 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class SubmissionService {
@@ -45,11 +46,9 @@ public class SubmissionService {
         this.authManager = authManager;
     }
 
-    private void setupChain(boolean addThirdStage) {
-        DeadlineValidator deadlineValidator = new DeadlineValidator(httpRequestService);
-        if (addThirdStage) {
-            deadlineValidator.setNext(new SubmissionValidator(httpRequestService));
-        }
+    private void setupChain() {
+        DeadlineValidator deadlineValidator = new DeadlineValidator();
+        deadlineValidator.setNext(new SubmissionValidator(httpRequestService));
         handler = new UserValidator(submissionRepository, statisticsRepository, httpRequestService,
                 authManager);
         handler.setNext(deadlineValidator);
@@ -62,7 +61,7 @@ public class SubmissionService {
      * @return response with created submission if success, otherwise error
      */
     public ResponseEntity<String> add(Submission submission) throws Exception {
-        setupChain(true);
+        setupChain();
         handler.handle(null, null, null, submission, HttpMethod.POST);
         if (!checkDuplicateSubmissions(submission)) {
             throw new DuplicateSubmissionException("A submission with such a title already exists in this event!");
@@ -81,13 +80,8 @@ public class SubmissionService {
      * @return response ok if submission is deleted, error otherwise
      */
     public ResponseEntity<Void> delete(@PathVariable("id") Long submissionId) throws Exception {
-        Optional<Submission> deleted = submissionRepository.findById(submissionId);
-        if (deleted.isEmpty()) {
-            return ResponseEntity.status(404).build();
-        }
-
-        Submission submission = deleted.get();
-        setupChain(false);
+        Submission submission = findSubmission(submissionId);
+        setupChain();
         GeneralStrategy strategy = handler.handle(null, null, null, submission, HttpMethod.DELETE);
         strategy.deleteSubmission(submission);
         statisticsService.updateStatistics(submission, null);
@@ -103,17 +97,20 @@ public class SubmissionService {
      */
     public ResponseEntity<Submission> update(@PathVariable("id") Long submissionId,
                                              Submission updatedSubmission) throws Exception {
-        Optional<Submission> optional = submissionRepository.findById(submissionId);
-        if (optional.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        Submission submission = optional.get();
-        setupChain(false);
+        Submission submission = findSubmission(submissionId);
+        setupChain();
         GeneralStrategy strategy = handler.handle(null, null, null, submission, HttpMethod.PUT);
         strategy.updateSubmission(submission, updatedSubmission);
         statisticsService.updateStatistics(submission, updatedSubmission);
         return ResponseEntity.ok().build();
+    }
+
+    private Submission findSubmission(long submissionId) throws NotFoundException {
+        Optional<Submission> submission = submissionRepository.findById(submissionId);
+        if (submission.isEmpty()) {
+            throw new NotFoundException("Submission with the given id was not found.");
+        }
+        return submission.get();
     }
 
     /**
@@ -123,15 +120,11 @@ public class SubmissionService {
      * @return submission if it is found for a given id, error otherwise
      */
     public ResponseEntity<Submission> getById(Long submissionId) throws Exception {
+        Submission submission = findSubmission(submissionId);
+        setupChain();
+        GeneralStrategy strategy = handler.handle(null, null, null, submission, HttpMethod.GET);
 
-        Optional<Submission> submission = submissionRepository.findById(submissionId);
-        if (submission.isEmpty()) {
-            return ResponseEntity.status(404).build();
-        }
-        setupChain(false);
-        GeneralStrategy strategy = handler.handle(null, null, null, submission.get(), HttpMethod.GET);
-
-        return ResponseEntity.ok().body(strategy.getSubmission(submission.get()));
+        return ResponseEntity.ok().body(strategy.getSubmission(submission));
     }
 
     /**
@@ -150,33 +143,13 @@ public class SubmissionService {
                                                 String title, List<String> keywords, Long trackId,
                                                 Long eventId, PaperType type) {
 
-        //imagine that I am doing some proper authentication checks here
-        List<Submission> submissions = submissionRepository.findAll();
-        List<Submission> result = new ArrayList<>();
-        for (Submission submission : submissions) {
-            if (submittedBy != null && !submittedBy.equals(submission.getSubmittedBy())) {
-                continue;
-            }
-            if (authors != null && !authors.equals(submission.getAuthors())) {
-                continue;
-            }
-            if (title != null && !title.equals(submission.getTitle())) {
-                continue;
-            }
-            if (keywords != null && !keywords.equals(submission.getKeywords())) {
-                continue;
-            }
-            if (trackId != null && !trackId.equals(submission.getTrackId())) {
-                continue;
-            }
-            if (eventId != null && !eventId.equals(submission.getEventId())) {
-                continue;
-            }
-            if (type != null && !type.equals(submission.getType())) {
-                continue;
-            }
-            result.add(submission);
-        }
+        List<Submission> submissions = submissionRepository.findAllMatching(submittedBy, authors, title,
+                keywords, trackId, eventId, type);
+        List<Submission> result = submissions.stream().peek(x -> {
+            x.setStatus(null);
+            x.setCreated(null);
+            x.setUpdated(null);
+        }).collect(Collectors.toList());
 
         return ResponseEntity.ok().body(result);
     }

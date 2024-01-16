@@ -2,12 +2,14 @@ package nl.tudelft.sem.template.submission.components.chain;
 
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
+import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 @Component
 public abstract class BaseValidator implements Validator {
     private Validator next;
+    private HttpRequestService httpRequestService;
 
     public void setNext(Validator h) {
         this.next = h;
