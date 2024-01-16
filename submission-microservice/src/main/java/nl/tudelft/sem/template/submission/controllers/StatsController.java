@@ -37,10 +37,8 @@ public class StatsController implements StatsApi {
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).build();
         } catch (DeadlinePassedException e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
@@ -60,10 +58,8 @@ public class StatsController implements StatsApi {
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).build();
         } catch (DeadlinePassedException e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }

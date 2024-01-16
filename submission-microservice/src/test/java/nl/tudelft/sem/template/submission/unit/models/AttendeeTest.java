@@ -47,7 +47,9 @@ class AttendeeTest {
     }
 
     @Test
-    void testGetId() {assertEquals(1L,pChair.getId());}
+    void testGetId() {
+        assertEquals(1L, pChair.getId());
+    }
 
     @Test
     void testGetUserId() {

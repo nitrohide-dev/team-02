@@ -103,7 +103,8 @@ public class Attendee {
             return false;
         }
         Attendee chair = (Attendee) o;
-        return id==chair.id && userId == chair.userId && eventId == chair.eventId && trackId == chair.trackId && role == chair.role;
+        return id == chair.id && userId
+                == chair.userId && eventId == chair.eventId && trackId == chair.trackId && role == chair.role;
     }
 
     /**
