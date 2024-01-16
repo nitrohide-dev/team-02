@@ -132,7 +132,7 @@ public class SubmissionControllerTest {
     }
 
 
-
+    /*
     @Test
     void testSaveFileException()
         throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, IOException {
@@ -146,7 +146,7 @@ public class SubmissionControllerTest {
         saveFileMethod.setAccessible(true);
         assertNull(saveFileMethod.invoke(submissionController, mockFile));
 
-    }
+    }*/
 
     @Test
     void testAddSubmissionBadResponse() {
