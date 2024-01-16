@@ -1,14 +1,12 @@
 package nl.tudelft.sem.template.submission.services;
 
 import javassist.NotFoundException;
-import nl.tudelft.sem.template.model.KeywordsCounts;
-import nl.tudelft.sem.template.model.Statistics;
-import nl.tudelft.sem.template.model.Submission;
-import nl.tudelft.sem.template.model.SubmissionStatus;
+import nl.tudelft.sem.template.model.*;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
 import nl.tudelft.sem.template.submission.components.chain.BaseValidator;
 import nl.tudelft.sem.template.submission.components.chain.UserValidator;
 import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
+import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import org.springframework.http.HttpMethod;
@@ -25,7 +23,6 @@ import java.util.stream.IntStream;
 public class StatisticsService {
     private final SubmissionRepository submissionRepository;
     private final StatisticsRepository statisticsRepository;
-    private final TrackService trackService;
     private final HttpRequestService requestService;
     private final AuthManager authManager;
     private BaseValidator handler;
@@ -38,19 +35,17 @@ public class StatisticsService {
      */
     public StatisticsService(SubmissionRepository submissionRepository,
                              StatisticsRepository statisticsRepository,
-                             TrackService trackService,
                              HttpRequestService requestService,
                              AuthManager authManager) {
         this.submissionRepository = submissionRepository;
         this.statisticsRepository = statisticsRepository;
-        this.trackService = trackService;
         this.requestService = requestService;
         this.authManager = authManager;
     }
 
     private void setupChain() {
         handler = new UserValidator(submissionRepository, statisticsRepository,
-                requestService, trackService, authManager);
+                requestService, authManager);
     }
 
     /**
@@ -65,7 +60,10 @@ public class StatisticsService {
         setupChain();
         GeneralStrategy strategy = handler.handle(null, null, trackId, null, HttpMethod.GET);
 
-        return strategy.getStatistics(trackService.getTrackById(trackId));
+        return strategy.getStatistics(
+                requestService.get("track/" + trackId,
+                        Track.class,
+                        RequestType.USER));
     }
 
     /**

@@ -9,7 +9,6 @@ import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.HttpRequestService;
-import nl.tudelft.sem.template.submission.services.TrackService;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +19,6 @@ public class UserValidator extends BaseValidator {
     SubmissionRepository submissionRepository;
     StatisticsRepository statisticsRepository;
     HttpRequestService httpRequestService;
-    TrackService trackService;
     AuthManager authManager;
 
     /**
@@ -31,12 +29,11 @@ public class UserValidator extends BaseValidator {
     public UserValidator(SubmissionRepository submissionRepository,
                          StatisticsRepository statisticsRepository,
                          HttpRequestService httpRequestService,
-                         TrackService trackService,
                          AuthManager authManager) {
         this.submissionRepository = submissionRepository;
         this.statisticsRepository = statisticsRepository;
         this.httpRequestService = httpRequestService;
-        this.trackService = trackService;
+        ;
         this.authManager = authManager;
     }
 
@@ -81,9 +78,9 @@ public class UserValidator extends BaseValidator {
      * @return long which changes depending on what has happened
      */
     public GeneralStrategy handle(GeneralStrategy strategy,
-                                     Long userId, Long trackId,
-                                     Submission submission,
-                                     HttpMethod requestType) throws Exception {
+                                  Long userId, Long trackId,
+                                  Submission submission,
+                                  HttpMethod requestType) throws Exception {
 
         String email = authManager.getEmail();
         userId = Long.parseLong(httpRequestService.getAttribute("user/byEmail/" + email, RequestType.USER, "id"));
@@ -106,10 +103,10 @@ public class UserValidator extends BaseValidator {
 
         switch (role) {
             case AUTHOR -> {
-                strategy = new SubmissionAuthorStrategy(submissionRepository, httpRequestService, trackService, userId);
+                strategy = new SubmissionAuthorStrategy(submissionRepository, httpRequestService, userId);
             }
             case SUB_REVIEWER -> {
-                strategy = new SubmissionReviewerStrategy(submissionRepository, trackService);
+                strategy = new SubmissionReviewerStrategy(submissionRepository, httpRequestService);
             }
             case PC_CHAIR -> {
                 strategy = new PcChairStrategy(statisticsRepository);

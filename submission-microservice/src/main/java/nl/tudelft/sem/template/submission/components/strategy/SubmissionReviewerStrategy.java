@@ -3,8 +3,9 @@ package nl.tudelft.sem.template.submission.components.strategy;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
+import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
-import nl.tudelft.sem.template.submission.services.TrackService;
+import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @Component
 public class SubmissionReviewerStrategy implements GeneralStrategy {
     private final SubmissionRepository submissionRepository;
-    private final TrackService trackService;
+    private final HttpRequestService httpRequestService;
 
     /**
      * SubmissionNotAuthorStrategy constructor.
@@ -20,14 +21,17 @@ public class SubmissionReviewerStrategy implements GeneralStrategy {
      * @param submissionRepository submission repository.
      */
     public SubmissionReviewerStrategy(SubmissionRepository submissionRepository,
-                                      TrackService trackService) {
+                                      HttpRequestService httpRequestService) {
         this.submissionRepository = submissionRepository;
-        this.trackService = trackService;
+        this.httpRequestService = httpRequestService;
     }
 
     @Override
     public boolean checkDeadline(long trackId) {
-        Track track = trackService.getTrackById(trackId);
+        Track track = httpRequestService.get("track/" + trackId,
+                Track.class,
+                RequestType.USER);
+
         String reviewDeadline = track.getReviewDeadline();
         String submissionDeadline = track.getSubmitDeadline();
 

@@ -6,7 +6,6 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
-import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
 import nl.tudelft.sem.template.submission.authentication.JwtTokenVerifier;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
@@ -15,7 +14,6 @@ import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import nl.tudelft.sem.template.submission.services.StatisticsService;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
-import nl.tudelft.sem.template.submission.services.TrackService;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +48,6 @@ public class SubmissionServiceTest {
     private SubmissionRepository submissionRepository;
     private StatisticsRepository statisticsRepository;
     private StatisticsService statisticsService;
-    private TrackService trackService;
     @InjectMocks
     private HttpRequestService httpRequestService;
     @Mock
@@ -88,12 +85,12 @@ public class SubmissionServiceTest {
     public void setup() {
         submissionRepository = mock(SubmissionRepository.class);
         statisticsRepository = mock(StatisticsRepository.class);
-        statisticsService = mock(StatisticsService.class);
-        trackService = mock(TrackService.class);
+        statisticsService = new StatisticsService(submissionRepository,
+                statisticsRepository, httpRequestService, authManager);
         authManager = mock(AuthManager.class);
         submissionService = new SubmissionService(
                 submissionRepository, statisticsService,
-                statisticsRepository, trackService,
+                statisticsRepository,
                 httpRequestService, authManager
         );
 
@@ -163,12 +160,15 @@ public class SubmissionServiceTest {
     public void testAddSubmission() throws Exception {
         commonAuthorSetup();
 
-        Track track = new Track();
-        track.setId(0L);
-        track.setEventId(1L);
-        track.setPaperType(PaperType.FULL_PAPER);
-        track.setSubmitDeadline("2024-09-10T23:59:59");
-        when(trackService.getTrackById(0L)).thenReturn(track);
+        wireMockServerUser.stubFor(
+                WireMock.get("/track/0")
+                        .willReturn(aResponse()
+                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                .withBody("{\"id\":\"0\",\"event_id\":\"1\",\"submit_deadline\":\"2024-09-10T23:59:59\","
+                                        + "\"paper_type\":\"full-paper\",\"title\":\"\",\"description\":\"\","
+                                        + "\"review_deadline\":\"2024-09-10T23:59:59\"}")
+                        )
+        );
 
         submission.setType(PaperType.FULL_PAPER);
         submissionService.add(submission);
@@ -182,12 +182,16 @@ public class SubmissionServiceTest {
     @Test
     void testAddSubmissionAfterDeadline() throws Exception {
         commonAuthorSetup();
-        Track track = new Track();
-        track.setId(0L);
-        track.setEventId(1L);
-        track.setPaperType(PaperType.FULL_PAPER);
-        track.setSubmitDeadline("2023-09-10T23:59:59");
-        when(trackService.getTrackById(0L)).thenReturn(track);
+
+        wireMockServerUser.stubFor(
+                WireMock.get("/track/0")
+                        .willReturn(aResponse()
+                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                .withBody("{\"id\":\"0\",\"event_id\":\"1\",\"submit_deadline\":\"2023-09-10T23:59:59\","
+                                        + "\"paper_type\":\"full-paper\",\"title\":\"\",\"description\":\"\","
+                                        + "\"review_deadline\":\"2024-09-10T23:59:59\"}")
+                        )
+        );
 
         submission.setType(PaperType.FULL_PAPER);
         Exception e = assertThrows(DeadlinePassedException.class, () -> {
@@ -199,12 +203,15 @@ public class SubmissionServiceTest {
     @Test
     void testReviewAfterDeadline() {
         commonReviewerSetup();
-        Track track = new Track();
-        track.setId(0L);
-        track.setEventId(1L);
-        track.setPaperType(PaperType.FULL_PAPER);
-        track.setReviewDeadline("2023-09-10T23:59:59");
-        when(trackService.getTrackById(0L)).thenReturn(track);
+        wireMockServerUser.stubFor(
+                WireMock.get("/track/0")
+                        .willReturn(aResponse()
+                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                .withBody("{\"id\":\"0\",\"event_id\":\"1\",\"submit_deadline\":\"2022-09-10T23:59:59\","
+                                        + "\"paper_type\":\"full-paper\",\"title\":\"\",\"description\":\"\","
+                                        + "\"review_deadline\":\"2023-09-10T23:59:59\"}")
+                        )
+        );
 
         submission.setType(PaperType.FULL_PAPER);
         when(submissionRepository.findById(submission.getId())).thenReturn(Optional.of(submission));
@@ -219,13 +226,15 @@ public class SubmissionServiceTest {
     @Test
     void testReviewBeforeSubmissionDeadline() {
         commonReviewerSetup();
-        Track track = new Track();
-        track.setId(0L);
-        track.setEventId(1L);
-        track.setPaperType(PaperType.FULL_PAPER);
-        track.setReviewDeadline("2024-09-10T23:59:59");
-        track.setSubmitDeadline("2024-08-10T23:59:59");
-        when(trackService.getTrackById(0L)).thenReturn(track);
+        wireMockServerUser.stubFor(
+                WireMock.get("/track/0")
+                        .willReturn(aResponse()
+                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                .withBody("{\"id\":\"0\",\"event_id\":\"1\",\"submit_deadline\":\"2024-09-10T23:59:59\","
+                                        + "\"paper_type\":\"full-paper\",\"title\":\"\",\"description\":\"\","
+                                        + "\"review_deadline\":\"2024-08-10T23:59:59\"}")
+                        )
+        );
 
         submission.setType(PaperType.FULL_PAPER);
 
@@ -238,6 +247,39 @@ public class SubmissionServiceTest {
         });
         assertEquals("You cannot modify submission after the deadline.", e.getMessage());
     }
+
+    //    @Test
+    //    void testGetSubmissionAfterReviewDeadline() throws Exception {
+    //        commonAuthorSetup();
+    //        wireMockServerUser.stubFor(
+    //                WireMock.get("/track/0")
+    //                        .willReturn(aResponse()
+    //                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+    //                                .withBody("{\"id\":\"0\",\"event_id\":\"1\",\"submit_deadline\":
+    //                                \"2023-09-10T23:59:59\","
+    //                                        + "\"paper_type\":\"full-paper\",\"title\":\"\",\"description\":\"\","
+    //                                        + "\"review_deadline\":\"2023-08-10T23:59:59\"}")
+    //                        )
+    //        );
+    //
+    //        wireMockServerReview.stubFor(
+    //                WireMock.get("/comments/1/papers/1")
+    //                        .willReturn(aResponse()
+    //                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+    //                                .withBody("{\"commentID\":\"0\",\"userID\":\"1\",\"reviewID\":\"2\","
+    //                                        + "\"description\":\"description\",\"isConfidential\":\"true\"}")
+    //                        )
+    //        );
+    //
+    //        submission.setId(1L);
+    //        submission.setStatus(SubmissionStatus.UNDERREVIEW);
+    //        submission.setType(PaperType.FULL_PAPER);
+    //
+    //        when(submissionRepository.findById(1L)).thenReturn(Optional.of(submission));
+    //
+    //        Submission result = submissionService.getById(1L).getBody();
+    //        assertEquals(1, result.getComments().size());
+    //    }
 
 }
 

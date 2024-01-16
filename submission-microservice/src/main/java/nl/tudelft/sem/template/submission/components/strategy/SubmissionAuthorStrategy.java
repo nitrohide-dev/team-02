@@ -3,10 +3,10 @@ package nl.tudelft.sem.template.submission.components.strategy;
 import nl.tudelft.sem.template.model.Comment;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
+import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.HttpRequestService;
-import nl.tudelft.sem.template.submission.services.TrackService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,7 +15,6 @@ import java.util.List;
 public class SubmissionAuthorStrategy implements GeneralStrategy {
     private final SubmissionRepository submissionRepository;
     private final HttpRequestService httpRequestService;
-    private final TrackService trackService;
     Long userId;
 
     /**
@@ -25,17 +24,17 @@ public class SubmissionAuthorStrategy implements GeneralStrategy {
      */
     public SubmissionAuthorStrategy(SubmissionRepository submissionRepository,
                                     HttpRequestService httpRequestService,
-                                    TrackService trackService,
                                     Long userId) {
         this.submissionRepository = submissionRepository;
         this.httpRequestService = httpRequestService;
-        this.trackService = trackService;
         this.userId = userId;
     }
 
     @Override
     public boolean checkDeadline(long trackId) {
-        String submissionDeadline = trackService.getTrackById(trackId).getSubmitDeadline();
+        String submissionDeadline = httpRequestService.get("track/" + trackId,
+                Track.class,
+                RequestType.USER).getSubmitDeadline();
         if (LocalDateTime.parse(submissionDeadline).isBefore(LocalDateTime.now())) {
             return false;
         }
@@ -46,7 +45,7 @@ public class SubmissionAuthorStrategy implements GeneralStrategy {
     public Submission getSubmission(Submission submission) {
         // need to change submission id to long !!!
         if (!submission.getStatus().equals(SubmissionStatus.OPEN)) {
-            List<Comment> comments = httpRequestService.getList("/comments/" + userId + "/papers/" + submission.getId(),
+            List<Comment> comments = httpRequestService.getList("comments/" + userId + "/papers/" + submission.getId(),
                     Comment[].class, RequestType.REVIEW);
             List<String> commentsContent = new ArrayList<>();
             for (Comment comment : comments) {

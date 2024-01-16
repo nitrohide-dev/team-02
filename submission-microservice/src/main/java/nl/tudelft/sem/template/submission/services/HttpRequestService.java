@@ -87,7 +87,7 @@ public class HttpRequestService {
                 JsonNode jsonNode = objectMapper.readTree(response);
                 return jsonNode.get(attribute).asText();
             } catch (JsonProcessingException e) {
-                throw new RuntimeException("Error occurred while processing json");
+                throw new RuntimeException(e.getMessage());
             }
         } catch (IOException | InterruptedException exception) {
             throw new BadResponseException("Error occurred while making the HTTP request");
@@ -106,12 +106,13 @@ public class HttpRequestService {
         url = buildUrl(url, requestType);
         try {
             String response = getResponse(url);
+            System.out.println(response);
             try {
                 T object;
                 object = objectMapper.readValue(response, responseType);
                 return object;
             } catch (JsonProcessingException e) {
-                throw new RuntimeException("Error occurred while processing json");
+                throw new RuntimeException(e.getMessage());
             }
 
         } catch (IOException | InterruptedException exception) {
