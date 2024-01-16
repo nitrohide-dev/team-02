@@ -64,15 +64,12 @@ public class SubmissionController implements SubmissionApi {
             }
             return submissionService.add(submission);
         } catch (IOException e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         } catch (DeadlinePassedException e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         } catch (IllegalAccessException e) {
             return ResponseEntity.status(401).build();
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
@@ -96,7 +93,6 @@ public class SubmissionController implements SubmissionApi {
 
             return filePath;
         } catch (IOException e) {
-            e.printStackTrace();
             return null;
         }
     }
@@ -116,10 +112,8 @@ public class SubmissionController implements SubmissionApi {
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).build();
         } catch (DeadlinePassedException e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
@@ -179,10 +173,8 @@ public class SubmissionController implements SubmissionApi {
         } catch (NotFoundException e) {
             return ResponseEntity.status(404).build();
         } catch (DeadlinePassedException e) {
-            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         } catch (DuplicateSubmissionException e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();

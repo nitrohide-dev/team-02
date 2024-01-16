@@ -4,6 +4,7 @@ import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
+import nl.tudelft.sem.template.submission.components.chain.DuplicateSubmissionException;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
@@ -20,19 +22,15 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class SubmissionControllerTest {
@@ -134,27 +132,21 @@ public class SubmissionControllerTest {
     }
 
 
-    //    How to make a file corrupt/unreadable?
-    //
-    //    @Test
-    //    void testSaveFileException() throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-    //        mockFile = new MockMultipartFile(
-    //                "/",
-    //                "/",
-    //                "",
-    //                "/".getBytes()
-    //        );
-    //        Method saveFileMethod = SubmissionController.class.getDeclaredMethod("saveFile", MultipartFile.class);
-    //        saveFileMethod.setAccessible(true);
-    //
-    //        assertThrows(IOException.class, () -> {
-    //            try {
-    //                saveFileMethod.invoke(submissionController, mockFile);
-    //            } catch (InvocationTargetException e) {
-    //                throw e.getTargetException();
-    //            }
-    //        });
-    //    }
+
+    @Test
+    void testSaveFileException()
+        throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, IOException {
+        mockFile = new MockMultipartFile(
+                "meow",
+                "/././../../../fot.dsaas",
+                "text/plain",
+                "contentttttt".getBytes()
+        );
+        Method saveFileMethod = SubmissionController.class.getDeclaredMethod("saveFile", MultipartFile.class);
+        saveFileMethod.setAccessible(true);
+        assertNull(saveFileMethod.invoke(submissionController, mockFile));
+
+    }
 
     @Test
     void testAddSubmissionBadResponse() {
@@ -272,6 +264,73 @@ public class SubmissionControllerTest {
                 keywords, trackId, eventId, type);
         assertEquals(expectedResponse, result);
         verify(submissionService).get(submittedBy, authors, title, keywords, trackId, eventId, type);
+    }
+
+    @Test
+    void testAddSubmissionIoException() throws Exception {
+
+        when(submissionService.add(any(Submission.class))).thenThrow(IOException.class);
+        ResponseEntity<String> response = submissionController.addSubmission(submissionData, mockFile);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertNull(response.getBody());
+    }
+
+    @Test
+    void testAddSubmissionDeadlinePassedException() throws Exception {
+
+        when(submissionService.add(any(Submission.class))).thenThrow(DeadlinePassedException.class);
+        ResponseEntity<String> response = submissionController.addSubmission(submissionData, mockFile);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void testAddSubmissionIllegalAccessException() throws Exception {
+
+        when(submissionService.add(any(Submission.class))).thenThrow(IllegalAccessException.class);
+        ResponseEntity<String> response = submissionController.addSubmission(submissionData, mockFile);
+        assertEquals(401, response.getStatusCodeValue());
+    }
+
+    @Test
+    void testAddSubmissionOtherException() throws Exception {
+
+        when(submissionService.add(any(Submission.class))).thenThrow(Exception.class);
+        ResponseEntity<String> response = submissionController.addSubmission(submissionData, mockFile);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void testDeleteSubmissionOtherException() throws Exception {
+        Long submissionId = 123L;
+        when(submissionService.delete(submissionId)).thenThrow(new Exception("Not found"));
+        ResponseEntity<Void> response = submissionController.deleteSubmission(submissionId);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void testUpdateSubmissionDuplicateSubmissionException() throws Exception {
+        Long submissionId = 123L;
+        Submission updatedSubmission = new Submission();
+        when(submissionService.update(submissionId, updatedSubmission))
+                .thenThrow(new DuplicateSubmissionException("i"));
+
+        ResponseEntity<Submission> response = submissionController.submissionSubmissionIdPut(submissionId,
+                updatedSubmission);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+    }
+
+    @Test
+    void testUpdateSubmissionOtherException() throws Exception {
+        Long submissionId = 123L;
+        Submission updatedSubmission = new Submission();
+        when(submissionService.update(submissionId, updatedSubmission))
+                .thenThrow(new Exception("i"));
+
+        ResponseEntity<Submission> response = submissionController.submissionSubmissionIdPut(submissionId,
+                updatedSubmission);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 }
 

@@ -51,8 +51,11 @@ public class StatsControllerTest {
     private static Statistics statistics1;
     private static Statistics statistics2;
 
+    /**
+     * setup method for tests.
+     */
     @BeforeAll
-    private static void generalSetup() {
+    public static void generalSetup() {
         statistics1 = new Statistics();
         statistics1.setId(1L);
         statistics1.setTotalSubmissions(3L);
