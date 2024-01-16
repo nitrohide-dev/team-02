@@ -10,8 +10,8 @@ public interface Validator {
     void setNext(Validator handler);
 
     GeneralStrategy handle(GeneralStrategy strategy,
-                           Long userId, Long trackId,
-                           Submission submission,
-                           HttpMethod requestType)
-            throws DeadlinePassedException, IllegalAccessException;
+                              Long userId, Long trackId,
+                              Submission submission,
+                              HttpMethod requestType)
+            throws Exception;
 }

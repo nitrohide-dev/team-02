@@ -1,14 +1,14 @@
 package nl.tudelft.sem.template.submission.services;
 
 import javassist.NotFoundException;
-import nl.tudelft.sem.template.model.*;
+import nl.tudelft.sem.template.model.KeywordsCounts;
+import nl.tudelft.sem.template.model.Statistics;
+import nl.tudelft.sem.template.model.Submission;
+import nl.tudelft.sem.template.model.SubmissionStatus;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
-import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
-import nl.tudelft.sem.template.submission.components.chain.SubmissionValidator;
+import nl.tudelft.sem.template.submission.components.chain.BaseValidator;
 import nl.tudelft.sem.template.submission.components.chain.UserValidator;
 import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
-import nl.tudelft.sem.template.submission.models.Attendee;
-import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import org.springframework.http.HttpMethod;
@@ -28,7 +28,7 @@ public class StatisticsService {
     private final TrackService trackService;
     private final HttpRequestService requestService;
     private final AuthManager authManager;
-    private SubmissionValidator handler;
+    private BaseValidator handler;
 
     /**
      * StatisticsService constructor.
@@ -48,24 +48,6 @@ public class StatisticsService {
         this.authManager = authManager;
     }
 
-    /**
-     * Checks if user has a specific role on the specified track.
-     *
-     * @param trackId id of a track
-     * @param userId  user id
-     * @param role    role of a user
-     * @return true if user has this role, false otherwise.
-     */
-    private boolean checkPermissions(Long trackId, Long userId, Role role) {
-        List<Attendee> chairsList = requestService.getList("attendee/" + trackId, Attendee.class, RequestType.USER);
-        for (Attendee c : chairsList) {
-            if (c.getUserId() == userId && c.getRole().equals(role)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void setupChain() {
         handler = new UserValidator(submissionRepository, statisticsRepository,
                 requestService, trackService, authManager);
@@ -79,8 +61,7 @@ public class StatisticsService {
      * @throws IllegalAccessException if user is not PC / general chair for the given track / event
      * @throws NotFoundException      if statistics for a given track / event was not collected yet
      */
-    public Statistics getStatistics(long trackId) throws IllegalAccessException,
-            NotFoundException, DeadlinePassedException {
+    public Statistics getStatistics(long trackId) throws Exception {
         setupChain();
         GeneralStrategy strategy = handler.handle(null, null, trackId, null, HttpMethod.GET);
 

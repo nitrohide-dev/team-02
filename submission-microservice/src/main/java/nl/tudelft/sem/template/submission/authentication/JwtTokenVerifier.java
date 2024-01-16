@@ -8,11 +8,12 @@ import java.util.function.Function;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 /**
  * Verifies the JWT token in the request for validity.
  */
-@Component
+@Service
 public class JwtTokenVerifier {
     @Value("${jwt.secret}")  // automatically loads jwt.secret from resources/application.properties
     private transient String jwtSecret;

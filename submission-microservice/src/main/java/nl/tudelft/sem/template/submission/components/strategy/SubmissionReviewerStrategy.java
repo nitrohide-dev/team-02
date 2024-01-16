@@ -5,9 +5,11 @@ import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import nl.tudelft.sem.template.submission.services.TrackService;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
+@Component
 public class SubmissionReviewerStrategy implements GeneralStrategy {
     private final SubmissionRepository submissionRepository;
     private final TrackService trackService;

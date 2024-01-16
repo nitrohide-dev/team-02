@@ -22,12 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 @SpringBootTest(classes = Application.class)
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-class ChairTest {
+class AttendeeTest {
 
     @MockBean
     private SubmissionService submissionService;
     @MockBean
     private SubmissionController submissionController;
+    private Long id = 0L;
 
     static Attendee pChair;
     static Attendee pChair2;
@@ -37,11 +38,11 @@ class ChairTest {
 
     @BeforeAll
     static void setUp() {
-        pChair = new Attendee(1L, 1L, 1L, Role.PC_CHAIR);
-        pChair2 = new Attendee(1L, 1L, 1L, Role.PC_CHAIR);
-        gChair = new Attendee(1L, 1L, 1L, Role.GENERAL_CHAIR);
-        gChair2 = new Attendee(1L, 1L, 1L, Role.GENERAL_CHAIR);
-        gChair3 = new Attendee(2L, 2L, 2L, Role.GENERAL_CHAIR);
+        pChair = new Attendee(1L, 1L, 1L, 1L, Role.PC_CHAIR);
+        pChair2 = new Attendee(1L, 1L, 1L, 1L, Role.PC_CHAIR);
+        gChair = new Attendee(1L, 1L, 1L, 1L, Role.GENERAL_CHAIR);
+        gChair2 = new Attendee(1L, 1L, 1L, 1L, Role.GENERAL_CHAIR);
+        gChair3 = new Attendee(2L, 2L, 2L, 1L, Role.GENERAL_CHAIR);
 
     }
 

@@ -35,7 +35,7 @@ public class GeneralChairStrategy implements GeneralStrategy {
     private List<Track> getTracks(long eventId) {
         return httpRequestService.getList(
                 "track/" + "eventId=" + eventId,
-                Track.class,
+                Track[].class,
                 RequestType.USER
         );
     }

@@ -7,7 +7,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DeadlineValidator extends SubmissionValidator {
+public class DeadlineValidator extends BaseValidator {
     HttpRequestService httpRequestService;
 
     /**
@@ -27,12 +27,12 @@ public class DeadlineValidator extends SubmissionValidator {
      * @return long which changes depending on what has happened
      */
     public GeneralStrategy handle(GeneralStrategy strategy,
-                                  Long userId, Long trackId,
-                                  Submission submission,
-                                  HttpMethod requestType) throws DeadlinePassedException, IllegalAccessException {
+                                     Long userId, Long trackId,
+                                     Submission submission,
+                                     HttpMethod requestType) throws Exception {
 
         boolean beforeDeadline = strategy.checkDeadline(submission.getTrackId());
-        if (requestType.equals(HttpMethod.PUT) && !beforeDeadline) {
+        if ((requestType.equals(HttpMethod.PUT) || requestType.equals(HttpMethod.POST)) && !beforeDeadline) {
             throw new DeadlinePassedException("You cannot modify submission after the deadline.");
         }
 

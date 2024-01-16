@@ -302,8 +302,8 @@ components:
       description: ID of submission to return
       required: true
       schema:
-        type: string
-        format: uuid
+        type: integer
+        format: int64
     TrackId:
       name: trackId
       in: path
@@ -348,8 +348,8 @@ components:
       properties:
 
         id:
-          type: string
-          format: uuid
+          type: integer
+          format: int64
           uniqueItems: true
           x-field-extra-annotation: "@javax.persistence.Id"
 

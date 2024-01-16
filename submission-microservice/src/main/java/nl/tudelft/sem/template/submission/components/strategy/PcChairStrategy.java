@@ -4,9 +4,11 @@ import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.Statistics;
 import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
+import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+@Component
 public class PcChairStrategy implements GeneralStrategy {
     private final StatisticsRepository statisticsRepository;
 
