@@ -71,7 +71,6 @@ class AttendeeTest {
 
     @Test
     void testHashCode() {
-
         assertEquals(pChair.hashCode(), pChair2.hashCode());
         assertNotEquals(pChair.hashCode(), gChair.hashCode());
     }
