@@ -56,7 +56,8 @@ public class UserValidator extends BaseValidator {
             }
         } else {
 
-            List<Attendee> chairsList = httpRequestService.getList("attendee/" + trackId, Attendee[].class, RequestType.USER);
+            List<Attendee> chairsList = httpRequestService.getList("attendee/" + trackId, Attendee[].class,
+                    RequestType.USER);
             for (Attendee c : chairsList) {
                 if (c.getUserId() == userId && c.getRole().equals(Role.GENERAL_CHAIR)) {
                     return Role.GENERAL_CHAIR;
