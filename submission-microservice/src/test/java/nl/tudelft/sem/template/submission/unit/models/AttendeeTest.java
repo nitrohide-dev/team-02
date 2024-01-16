@@ -47,6 +47,9 @@ class AttendeeTest {
     }
 
     @Test
+    void testGetId() {assertEquals(1L,pChair.getId());}
+
+    @Test
     void testGetUserId() {
         assertEquals(1L, pChair.getUserId());
     }
@@ -67,13 +70,6 @@ class AttendeeTest {
     }
 
     @Test
-    void testEquals() {
-
-        assertEquals(gChair, gChair2);
-        assertNotEquals(gChair, gChair3);
-    }
-
-    @Test
     void testHashCode() {
 
         assertEquals(pChair.hashCode(), pChair2.hashCode());
@@ -86,4 +82,54 @@ class AttendeeTest {
         String expected = "Chair{userId=1, eventId=1, trackId=1, role=pc_chair}";
         assertEquals(expected, pChair.toString());
     }
+
+    @Test
+    void testEqualsRole() {
+
+        assertNotEquals(pChair, gChair);
+    }
+
+    @Test
+    void testEqualsId() {
+
+        assertNotEquals(pChair,  new Attendee(2L, 1L, 1L, 1L, Role.PC_CHAIR));
+    }
+
+    @Test
+    void testEqualsSerId() {
+
+        assertNotEquals(pChair,  new Attendee(1L, 2L, 1L, 1L, Role.PC_CHAIR));
+    }
+
+    @Test
+    void testEqualsEventId() {
+
+        assertNotEquals(pChair,  new Attendee(1L, 1L, 2L, 1L, Role.PC_CHAIR));
+    }
+
+    @Test
+    void testEqualsTrackId() {
+
+        assertNotEquals(pChair,  new Attendee(1L, 1L, 1L, 2L, Role.PC_CHAIR));
+    }
+
+    @Test
+    void testEqualsSame() {
+
+        assertEquals(pChair, pChair);
+    }
+
+    @Test
+    void testEqualsNull() {
+
+        assertNotEquals(pChair, null);
+    }
+
+    @Test
+    void testEqualsDifferentClass() {
+
+        assertNotEquals(pChair, new Object());
+    }
+
+
 }
