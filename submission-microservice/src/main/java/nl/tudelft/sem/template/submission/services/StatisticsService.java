@@ -8,7 +8,7 @@ import nl.tudelft.sem.template.model.SubmissionStatus;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
 import nl.tudelft.sem.template.submission.components.chain.BaseValidator;
 import nl.tudelft.sem.template.submission.components.chain.UserValidator;
-import nl.tudelft.sem.template.submission.components.strategy.SubmissionStrategy;
+import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
 import org.springframework.http.HttpMethod;
@@ -63,7 +63,7 @@ public class StatisticsService {
      */
     public Statistics getStatistics(long trackId) throws Exception {
         setupChain();
-        SubmissionStrategy strategy = handler.handle(null, null, trackId, null, HttpMethod.GET);
+        GeneralStrategy strategy = handler.handle(null, null, trackId, null, HttpMethod.GET);
 
         return strategy.getStatistics(trackService.getTrackById(trackId));
     }

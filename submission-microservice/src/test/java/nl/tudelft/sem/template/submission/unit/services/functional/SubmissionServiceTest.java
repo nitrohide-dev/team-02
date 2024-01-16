@@ -8,6 +8,7 @@ import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.SubmissionStatus;
 import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
+import nl.tudelft.sem.template.submission.authentication.JwtTokenVerifier;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.repositories.SubmissionRepository;
@@ -22,9 +23,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +41,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest(classes = HttpRequestService.class)
 @ExtendWith(MockitoExtension.class)
+@ContextConfiguration(classes = {JwtTokenVerifier.class})
 public class SubmissionServiceTest {
     private static WireMockServer wireMockServerAuth;
     private static WireMockServer wireMockServerUser;
@@ -46,7 +51,10 @@ public class SubmissionServiceTest {
     private StatisticsRepository statisticsRepository;
     private StatisticsService statisticsService;
     private TrackService trackService;
+    @InjectMocks
     private HttpRequestService httpRequestService;
+    @Mock
+    private JwtTokenVerifier jwtTokenVerifier;
     private AuthManager authManager;
     private SubmissionService submissionService;
 
@@ -83,7 +91,6 @@ public class SubmissionServiceTest {
         statisticsService = mock(StatisticsService.class);
         trackService = mock(TrackService.class);
         authManager = mock(AuthManager.class);
-        httpRequestService = new HttpRequestService();
         submissionService = new SubmissionService(
                 submissionRepository, statisticsService,
                 statisticsRepository, trackService,

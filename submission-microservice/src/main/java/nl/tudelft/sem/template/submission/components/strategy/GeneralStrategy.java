@@ -6,7 +6,7 @@ import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 
-public interface SubmissionStrategy {
+public interface GeneralStrategy {
     /**
      * Checks deadline for a role.
      *

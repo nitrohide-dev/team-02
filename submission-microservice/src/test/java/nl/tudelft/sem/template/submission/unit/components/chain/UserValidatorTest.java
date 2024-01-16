@@ -5,9 +5,9 @@ import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.Application;
 import nl.tudelft.sem.template.submission.components.chain.UserValidator;
 import nl.tudelft.sem.template.submission.components.strategy.AttendeeStrategy;
+import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
 import nl.tudelft.sem.template.submission.components.strategy.SubmissionAuthorStrategy;
 import nl.tudelft.sem.template.submission.components.strategy.SubmissionReviewerStrategy;
-import nl.tudelft.sem.template.submission.components.strategy.SubmissionStrategy;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
 import nl.tudelft.sem.template.submission.models.Attendee;
 import nl.tudelft.sem.template.submission.models.RequestType;
@@ -57,7 +57,7 @@ class UserValidatorTest {
 
     private Submission submission;
     private Long userId;
-    private SubmissionStrategy nextStrategy;
+    private GeneralStrategy nextStrategy;
 
     Long trackId;
     Long eventId;
@@ -71,7 +71,7 @@ class UserValidatorTest {
         submission.setEventId(eventId);
         submission.setAuthors(new ArrayList<>(Arrays.asList(1L, 2L)));
         userId = 123L;
-        nextStrategy = mock(SubmissionStrategy.class);
+        nextStrategy = mock(GeneralStrategy.class);
         userValidator.setNext(null);
         String email = "author@example.com";
         when(httpRequestService.getAttribute("user/byEmail/"
@@ -115,7 +115,7 @@ class UserValidatorTest {
                         + "&role=sub_reviewer",
                 Attendee[].class, RequestType.USER)).thenReturn(attendeeList);
 
-        SubmissionStrategy result = userValidator.handle(nextStrategy,
+        GeneralStrategy result = userValidator.handle(nextStrategy,
                 userId, null, submission, requestType);
         assertEquals(result.getClass(), SubmissionReviewerStrategy.class);
     }
@@ -133,7 +133,7 @@ class UserValidatorTest {
         when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
                         + "&role=sub_reviewer",
                 Attendee[].class, RequestType.USER)).thenReturn(attendeeList);
-        SubmissionStrategy result = userValidator.handle(nextStrategy,
+        GeneralStrategy result = userValidator.handle(nextStrategy,
                 userId, submission.getTrackId(), submission, HttpMethod.PUT);
         assertEquals(result.getClass(), SubmissionAuthorStrategy.class);
     }
@@ -174,7 +174,7 @@ class UserValidatorTest {
                         + "&role=sub_reviewer",
                 Attendee[].class, RequestType.USER)).thenReturn(attendeeList);
 
-        SubmissionStrategy result = userValidator.handle(nextStrategy,
+        GeneralStrategy result = userValidator.handle(nextStrategy,
                 userId, submission.getTrackId(), submission, HttpMethod.GET);
         assertEquals(result.getClass(), AttendeeStrategy.class);
 

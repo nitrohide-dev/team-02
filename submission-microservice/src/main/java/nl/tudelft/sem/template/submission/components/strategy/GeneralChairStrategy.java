@@ -10,7 +10,7 @@ import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import java.util.Arrays;
 import java.util.List;
 
-public class GeneralChairStrategy implements SubmissionStrategy {
+public class GeneralChairStrategy implements GeneralStrategy {
     private final StatisticsRepository statisticsRepository;
     private final HttpRequestService httpRequestService;
 

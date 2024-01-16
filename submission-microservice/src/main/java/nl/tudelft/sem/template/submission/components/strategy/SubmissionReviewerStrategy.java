@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 
 @Component
-public class SubmissionReviewerStrategy implements SubmissionStrategy {
+public class SubmissionReviewerStrategy implements GeneralStrategy {
     private final SubmissionRepository submissionRepository;
     private final TrackService trackService;
 

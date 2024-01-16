@@ -3,7 +3,7 @@ package nl.tudelft.sem.template.submission.unit.components.chain;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.Application;
 import nl.tudelft.sem.template.submission.components.chain.DeadlineValidator;
-import nl.tudelft.sem.template.submission.components.strategy.SubmissionStrategy;
+import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
 import nl.tudelft.sem.template.submission.controllers.SubmissionController;
 import nl.tudelft.sem.template.submission.services.SubmissionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,10 +51,10 @@ class DeadlineValidatorTest {
     @Test
     void handle_ValidSubmissionBeforeDeadline_ReturnsNextStrategy() throws Exception {
 
-        SubmissionStrategy nextStrategy = mock(SubmissionStrategy.class);
+        GeneralStrategy nextStrategy = mock(GeneralStrategy.class);
         HttpMethod requestType = HttpMethod.PUT;
         when(nextStrategy.checkDeadline(14L)).thenReturn(true);
-        SubmissionStrategy result = deadlineValidator.handle(nextStrategy,
+        GeneralStrategy result = deadlineValidator.handle(nextStrategy,
                 123L, submission.getTrackId(), submission, requestType);
 
         //assert
@@ -65,7 +65,7 @@ class DeadlineValidatorTest {
 
     @Test
     void handle_ModifySubmissionAfterDeadline_ThrowsDeadlinePassedException() throws DeadlinePassedException {
-        SubmissionStrategy nextStrategy = mock(SubmissionStrategy.class);
+        GeneralStrategy nextStrategy = mock(GeneralStrategy.class);
         HttpMethod requestType = HttpMethod.PUT;
         when(nextStrategy.checkDeadline(anyLong())).thenReturn(false);
 

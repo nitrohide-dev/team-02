@@ -3,9 +3,9 @@ package nl.tudelft.sem.template.submission.components.chain;
 
 import nl.tudelft.sem.template.model.PaperType;
 import nl.tudelft.sem.template.model.Submission;
+import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
 import nl.tudelft.sem.template.model.SubmissionStatus;
 import nl.tudelft.sem.template.model.Track;
-import nl.tudelft.sem.template.submission.components.strategy.SubmissionStrategy;
 import nl.tudelft.sem.template.submission.services.TrackService;
 import org.springframework.http.HttpMethod;
 
@@ -32,7 +32,7 @@ public class SubmissionValidator extends BaseValidator {
      * @param requestType type of request
      * @return strategy used
      */
-    public SubmissionStrategy handle(SubmissionStrategy strategy, Long userId, Long trackId,
+    public GeneralStrategy handle(GeneralStrategy strategy, Long userId, Long trackId,
                                      Submission submission, HttpMethod requestType) {
 
         String paperType = checkPaperType(submission);

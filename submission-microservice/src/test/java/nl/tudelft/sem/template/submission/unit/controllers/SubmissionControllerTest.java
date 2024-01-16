@@ -55,21 +55,15 @@ public class SubmissionControllerTest {
 
     @BeforeEach
     void setUp() {
-        submissionData = new String("{\n"
-                +
-                "    \"title\": \"Sample Paper Title\",\n"
-                +
-                "    \"authors\": [1, 2],\n"
-                +
-                "    \"abstract\": \"This is a sample abstract of the paper.\",\n"
-                +
-                "    \"keywords\": [\"keyword1\", \"keyword2\"],\n"
-                +
-                "    \"link\": \"https://github.com/sample-repo\",\n"
-                +
-                "    \"trackId\": 1\n"
-                +
-                "}");
+        submissionData = """
+                {
+                    "title": "Sample Paper Title",
+                    "authors": [1, 2],
+                    "abstract": "This is a sample abstract of the paper.",
+                    "keywords": ["keyword1", "keyword2"],
+                    "link": "https://github.com/sample-repo",
+                    "trackId": 1
+                }""";
         mockFile = new MockMultipartFile(
                 "meow",
                 "meowmeow.txt",

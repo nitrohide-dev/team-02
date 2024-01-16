@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-public class PcChairStrategy implements SubmissionStrategy {
+public class PcChairStrategy implements GeneralStrategy {
     private final StatisticsRepository statisticsRepository;
 
     /**
