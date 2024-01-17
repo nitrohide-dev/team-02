@@ -106,7 +106,7 @@ public class StatisticsService {
 
         long n = statistics.getTotalSubmissions();
         statistics.setAverageNumberOfAuthors((statistics.getAverageNumberOfAuthors()
-                * n + submission.getAuthors().size()) / (n + 1));
+                * (n - 1) + submission.getAuthors().size()) / n);
 
         StatisticsServiceUtils.updateKeywordsCounts(statistics, submission.getKeywords(), 1L);
         statisticsRepository.save(statistics);
