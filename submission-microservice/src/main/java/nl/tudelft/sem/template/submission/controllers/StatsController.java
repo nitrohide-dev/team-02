@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Optional;
 
-
 @RestController
 public class StatsController implements StatsApi {
     private final StatisticsRepository statisticsRepository;
@@ -32,14 +31,8 @@ public class StatsController implements StatsApi {
         try {
             Statistics output = statisticsService.getStatistics(eventId);
             return ResponseEntity.of(Optional.of(output));
-        } catch (IllegalAccessException e) {
-            return ResponseEntity.status(401).build();
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(404).build();
-        } catch (DeadlinePassedException e) {
-            return ResponseEntity.badRequest().build();
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return handleException(e);
         }
     }
 
@@ -53,13 +46,19 @@ public class StatsController implements StatsApi {
         try {
             Statistics output = statisticsService.getStatistics(trackId);
             return ResponseEntity.of(Optional.of(output));
-        } catch (IllegalAccessException e) {
-            return ResponseEntity.status(401).build();
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(404).build();
-        } catch (DeadlinePassedException e) {
-            return ResponseEntity.badRequest().build();
         } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    private ResponseEntity<Statistics> handleException(Exception e) {
+        if (e instanceof IllegalAccessException) {
+            return ResponseEntity.status(401).build();
+        } else if (e instanceof NotFoundException) {
+            return ResponseEntity.status(404).build();
+        } else if (e instanceof DeadlinePassedException) {
+            return ResponseEntity.badRequest().build();
+        } else {
             return ResponseEntity.badRequest().build();
         }
     }
