@@ -228,13 +228,14 @@ public class StatisticsTest {
         // Verify that statistics was updated correctly
         submissionService.add(submission2);
         verify(statisticsRepository, times(2)).save(argumentCaptor.capture());
-        Statistics stats2 = argumentCaptor.getValue();
 
         expectedStats.setTotalSubmissions(2L);
         expectedStats.setOpen(2L);
         expectedStats.setAverageNumberOfAuthors(3L);
         expectedStats.getKeywordsCounts().setCounts(List.of(1L, 2L, 2L));
         expectedStats.getKeywordsCounts().setKeywords(List.of("keyword3", "keyword1", "keyword2"));
+
+        Statistics stats2 = argumentCaptor.getValue();
         assertEquals(expectedStats, stats2);
     }
 
@@ -363,13 +364,15 @@ public class StatisticsTest {
         when(statisticsRepository.findById(0L)).thenReturn(Optional.empty());
         submissionService.add(submission2);
         verify(statisticsRepository, times(2)).save(argumentCaptor.capture());
-        Statistics stats2 = argumentCaptor.getValue();
+
         expectedStats.setTotalSubmissions(1L);
         expectedStats.setId(0L);
         expectedStats.setOpen(1L);
         expectedStats.setAverageNumberOfAuthors(4L);
         expectedStats.getKeywordsCounts().setCounts(List.of(1L, 1L, 1L));
         expectedStats.getKeywordsCounts().setKeywords(List.of("keyword3", "keyword1", "keyword2"));
+
+        Statistics stats2 = argumentCaptor.getValue();
         assertEquals(expectedStats, stats2);
 
         when(statisticsRepository.findAllById(List.of(0L, 1L))).thenReturn(List.of(stats1, stats2));
@@ -420,13 +423,15 @@ public class StatisticsTest {
         // Verify that statistics updated correctly when deleting submission
         submissionService.delete(0L);
         verify(statisticsRepository, times(1)).save(argumentCaptor.capture());
-        Statistics updated = argumentCaptor.getValue();
+
         collectedStats.setAccepted(6L);
         collectedStats.setTotalSubmissions(9L);
         collectedStats.setAverageNumberOfAuthors(2L);
         keywordsCounts.setCounts(List.of(17L, 20L, 9L, 11L));
         keywordsCounts.setKeywords(List.of("keyword3", "keyword4", "keyword1", "keyword2"));
         collectedStats.setKeywordsCounts(keywordsCounts);
+
+        Statistics updated = argumentCaptor.getValue();
         assertEquals(collectedStats, updated);
     }
 
