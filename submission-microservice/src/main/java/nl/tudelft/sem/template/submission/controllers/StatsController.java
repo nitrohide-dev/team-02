@@ -32,18 +32,25 @@ public class StatsController implements StatsApi {
         return ResponseEntity.of(Optional.of(statisticsRepository.findAll()));
     }
 
+
     @Override
     public ResponseEntity<Statistics> trackOrEventStatisticsGet(Long trackId) {
         try {
             Statistics output = statisticsService.getStatistics(trackId);
             return ResponseEntity.of(Optional.of(output));
-        } catch (IllegalAccessException e) {
-            return ResponseEntity.status(401).build();
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(404).build();
-        } catch (DeadlinePassedException e) {
-            return ResponseEntity.badRequest().build();
         } catch (Exception e) {
+            return handleException(e);
+        }
+    }
+
+    private ResponseEntity<Statistics> handleException(Exception e) {
+        if (e instanceof IllegalAccessException) {
+            return ResponseEntity.status(401).build();
+        } else if (e instanceof NotFoundException) {
+            return ResponseEntity.status(404).build();
+        } else if (e instanceof DeadlinePassedException) {
+            return ResponseEntity.badRequest().build();
+        } else {
             return ResponseEntity.badRequest().build();
         }
     }
