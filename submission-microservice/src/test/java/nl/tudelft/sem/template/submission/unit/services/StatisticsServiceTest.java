@@ -1,4 +1,4 @@
-package nl.tudelft.sem.template.submission.unit.services.unit;
+package nl.tudelft.sem.template.submission.unit.services;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.*;
@@ -132,11 +132,11 @@ public class StatisticsServiceTest {
         when(requestService.getList("track/" + "eventId=1", Track[].class, RequestType.USER))
                 .thenReturn(List.of());
 
-        when(requestService.getList("attendee/0", Attendee[].class, RequestType.USER))
+        when(requestService.getList("attendee/trackId=0", Attendee[].class, RequestType.USER))
                 .thenReturn(List.of(generalChair, pcChair1));
-        when(requestService.getList("attendee/1", Attendee[].class, RequestType.USER))
+        when(requestService.getList("attendee/trackId=1", Attendee[].class, RequestType.USER))
                 .thenReturn(List.of(generalChair, pcChair2));
-        when(requestService.getList("attendee/2", Attendee[].class, RequestType.USER))
+        when(requestService.getList("attendee/trackId=2", Attendee[].class, RequestType.USER))
                 .thenReturn(List.of(generalChair));
     }
 
@@ -224,7 +224,7 @@ public class StatisticsServiceTest {
         saved.setRejected(7L);
         saved.setAverageNumberOfAuthors(2L);
         saved.setKeywordsCounts(keywordsCounts);
-        verify(repository, times(1)).delete(saved);
+        verify(repository, times(1)).save(saved);
     }
 
     @Test

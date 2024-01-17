@@ -106,7 +106,6 @@ public class HttpRequestService {
         url = buildUrl(url, requestType);
         try {
             String response = getResponse(url);
-            System.out.println(response);
             try {
                 T object;
                 object = objectMapper.readValue(response, responseType);

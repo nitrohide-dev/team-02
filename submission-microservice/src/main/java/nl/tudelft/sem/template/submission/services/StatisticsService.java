@@ -13,7 +13,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
 
-
 @Service
 public class StatisticsService {
     private final SubmissionRepository submissionRepository;
@@ -124,9 +123,9 @@ public class StatisticsService {
 
         long n = statistics.getTotalSubmissions();
         statistics.setAverageNumberOfAuthors((statistics.getAverageNumberOfAuthors()
-                * n - submission.getAuthors().size()) / (n - 1));
+                * (n + 1) - submission.getAuthors().size()) / n);
         StatisticsServiceUtils.updateKeywordsCounts(statistics, submission.getKeywords(), -1L);
-        statisticsRepository.delete(statistics);
+        statisticsRepository.save(statistics);
     }
 
 

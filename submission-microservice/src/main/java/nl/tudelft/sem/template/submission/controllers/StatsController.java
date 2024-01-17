@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Optional;
 
+
 @RestController
 public class StatsController implements StatsApi {
     private final StatisticsRepository statisticsRepository;
@@ -27,22 +28,13 @@ public class StatsController implements StatsApi {
     }
 
     @Override
-    public ResponseEntity<Statistics> eventStatisticsGet(Long eventId) {
-        try {
-            Statistics output = statisticsService.getStatistics(eventId);
-            return ResponseEntity.of(Optional.of(output));
-        } catch (Exception e) {
-            return handleException(e);
-        }
-    }
-
-    @Override
     public ResponseEntity<List<Statistics>> statsGet() {
         return ResponseEntity.of(Optional.of(statisticsRepository.findAll()));
     }
 
+
     @Override
-    public ResponseEntity<Statistics> trackStatisticsGet(Long trackId) {
+    public ResponseEntity<Statistics> trackOrEventStatisticsGet(Long trackId) {
         try {
             Statistics output = statisticsService.getStatistics(trackId);
             return ResponseEntity.of(Optional.of(output));
