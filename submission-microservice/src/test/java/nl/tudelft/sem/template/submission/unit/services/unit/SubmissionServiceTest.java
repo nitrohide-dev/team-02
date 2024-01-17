@@ -311,4 +311,99 @@ public class SubmissionServiceTest {
         assertEquals(result, "You submitted a paper of incorrect type. The correct type is "
                 + PaperType.FULL_PAPER.toString());
     }
+
+    @Test
+    void testGetById_SubmissionNotFound() throws Exception {
+        Long submissionId = new Random().nextLong();
+        when(submissionRepository.findById(submissionId)).thenReturn(Optional.empty());
+
+        ResponseEntity<Submission> response = submissionService.getById(submissionId);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void testGetWithAllFiltersNull() {
+        List<Submission> allSubmissions = Arrays.asList(new Submission(), new Submission());
+        when(submissionRepository.findAll()).thenReturn(allSubmissions);
+
+        ResponseEntity<List<Submission>> response = submissionService.get(null, null, null,
+                null, null, null, null);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(allSubmissions, response.getBody());
+    }
+
+    @Test
+    void testGetWithSubmittedBy2() {
+        Long submittedById = 1L;
+        when(submissionRepository.findAll()).thenReturn(Collections.singletonList(submission));
+
+        ResponseEntity<List<Submission>> response = submissionService.get(2L, null, null,
+                null, null, null, null);
+
+        assertTrue(response.getBody().isEmpty());
+    }
+
+    @Test
+    void testGetWithAuthors2() {
+        List<Long> authors = Arrays.asList(1L, 2L);
+        when(submissionRepository.findAll()).thenReturn(Collections.singletonList(submission));
+
+        ResponseEntity<List<Submission>> response = submissionService.get(null, Arrays.asList(3L, 4L),
+                null, null, null, null, null);
+
+        assertTrue(response.getBody().isEmpty());
+    }
+
+    @Test
+    void testGetWithTitle2() {
+        when(submissionRepository.findAll()).thenReturn(Collections.singletonList(submission));
+
+        ResponseEntity<List<Submission>> response = submissionService.get(null, null,
+                "Different Title", null, null, null, null);
+
+        assertTrue(response.getBody().isEmpty());
+    }
+
+    @Test
+    void testGetWithKeywords2() {
+        when(submissionRepository.findAll()).thenReturn(Collections.singletonList(submission));
+
+        ResponseEntity<List<Submission>> response = submissionService.get(null, null,
+                null, Arrays.asList("UnmatchedKeyword"), null, null, null);
+
+        assertTrue(response.getBody().isEmpty());
+    }
+
+    @Test
+    void testGetWithTrackId2() {
+        when(submissionRepository.findAll()).thenReturn(Collections.singletonList(submission));
+
+        ResponseEntity<List<Submission>> response = submissionService.get(null, null, null,
+                null, 999L, null, null);
+
+        assertTrue(response.getBody().isEmpty());
+    }
+
+    @Test
+    void testGetWithEventId() {
+        when(submissionRepository.findAll()).thenReturn(Collections.singletonList(submission));
+
+        ResponseEntity<List<Submission>> response = submissionService.get(null, null, null,
+                null, null, 999L, null);
+
+        assertTrue(response.getBody().isEmpty());
+    }
+
+    @Test
+    void testGetWithType2() {
+        when(submissionRepository.findAll()).thenReturn(Collections.singletonList(submission));
+
+        ResponseEntity<List<Submission>> response = submissionService.get(null, null, null,
+                null, null, null, PaperType.FULL_PAPER);
+
+        assertTrue(response.getBody().isEmpty());
+    }
+
 }
