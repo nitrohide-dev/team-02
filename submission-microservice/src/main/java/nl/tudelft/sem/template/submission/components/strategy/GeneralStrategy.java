@@ -41,6 +41,7 @@ public interface GeneralStrategy {
      */
     default void updateSubmission(Submission oldSubmission, Submission newSubmission) throws IllegalAccessException,
             DeadlinePassedException {
+        throw new IllegalAccessException("You cannot modify a submission.");
     }
 
     /**
@@ -50,6 +51,7 @@ public interface GeneralStrategy {
      * @throws IllegalAccessException if user is not an author
      */
     default void deleteSubmission(Submission submission) throws IllegalAccessException {
+        throw new IllegalAccessException("You cannot delete a submission.");
     }
 
     /**
@@ -60,7 +62,7 @@ public interface GeneralStrategy {
      * @return statistics
      * @throws NotFoundException if no statistics was found for a track
      */
-    default Statistics getStatistics(Track track) throws NotFoundException {
-        return null;
+    default Statistics getStatistics(Track track) throws NotFoundException, IllegalAccessException {
+        throw new IllegalAccessException("User has not enough permissions to get statistics.");
     }
 }

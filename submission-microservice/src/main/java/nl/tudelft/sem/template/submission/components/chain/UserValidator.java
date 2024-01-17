@@ -88,17 +88,6 @@ public class UserValidator extends BaseValidator {
             role = Role.AUTHOR;
         }
 
-        if (requestType.equals(HttpMethod.DELETE) && !role.equals(Role.AUTHOR)) {
-            throw new IllegalAccessException("You cannot delete a submission.");
-        }
-        if (requestType.equals(HttpMethod.PUT) && !(role.equals(Role.AUTHOR) || role.equals(Role.SUB_REVIEWER))) {
-            throw new IllegalAccessException("You cannot modify a submission.");
-        }
-        if (requestType.equals(HttpMethod.GET) && submission == null
-                && !(role.equals(Role.PC_CHAIR) || role.equals(Role.GENERAL_CHAIR))) {
-            throw new IllegalAccessException("User has not enough permissions to get statistics.");
-        }
-
         strategy = getStrategy(userId, role);
 
         return super.checkNext(strategy, userId, trackId, submission, requestType);

@@ -4,7 +4,6 @@ import nl.tudelft.sem.template.model.Role;
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.Application;
 import nl.tudelft.sem.template.submission.authentication.AuthManager;
-import nl.tudelft.sem.template.submission.components.chain.DeadlinePassedException;
 import nl.tudelft.sem.template.submission.components.chain.UserValidator;
 import nl.tudelft.sem.template.submission.components.strategy.AttendeeStrategy;
 import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
@@ -33,7 +32,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -79,33 +77,7 @@ class UserValidatorTest {
                 + email, RequestType.USER, "id")).thenReturn(String.valueOf(userId));
         when(authManager.getEmail()).thenReturn(email);
     }
-
-    @Test
-    void deleteAttemptTest() throws IllegalAccessException, DeadlinePassedException {
-        HttpMethod requestType = HttpMethod.DELETE;
-        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
-                        + "&role=sub_reviewer",
-                Attendee[].class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
-
-        IllegalAccessException e = assertThrows(IllegalAccessException.class,
-                () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, requestType));
-        assertEquals(e.getMessage(), "You cannot delete a submission.");
-
-    }
-
-    @Test
-    void modifyAttemptTestAttendee() throws IllegalAccessException, DeadlinePassedException {
-        HttpMethod requestType = HttpMethod.PUT;
-        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
-                        + "&role=sub_reviewer",
-                Attendee[].class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
-
-        IllegalAccessException e = assertThrows(IllegalAccessException.class,
-                () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, requestType));
-        assertEquals(e.getMessage(), "You cannot modify a submission.");
-
-    }
-
+    
     @Test
     void subreviewerTest() throws Exception {
         Attendee a = new Attendee(userId, userId, 2L, 3L, Role.SUB_REVIEWER);
@@ -140,28 +112,6 @@ class UserValidatorTest {
     }
 
     @Test
-    void modifyAttemptTestMultipleAttendees() throws IllegalAccessException, DeadlinePassedException {
-        String email = "author@example.com";
-        when(authManager.getEmail()).thenReturn(email);
-        when(httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER)).thenReturn(userId);
-
-        Attendee a = new Attendee(99L, 1L, 2L, 3L, Role.SUB_REVIEWER);
-        Attendee b = new Attendee(98L, 1L, 2L, 3L, Role.SUB_REVIEWER);
-
-        List<Attendee> attendeeList = new ArrayList<Attendee>();
-        attendeeList.add(a);
-        attendeeList.add(b);
-        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
-                        + "&role=sub_reviewer",
-                Attendee[].class, RequestType.USER)).thenReturn(attendeeList);
-
-        IllegalAccessException e = assertThrows(IllegalAccessException.class,
-                () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, HttpMethod.PUT));
-        assertEquals(e.getMessage(), "You cannot modify a submission.");
-
-    }
-
-    @Test
     void checkPermissionsMultipleAttendees() throws Exception {
         Attendee a = new Attendee(99L, 1L, 2L, 3L, Role.SUB_REVIEWER);
         Attendee b = new Attendee(99L, 1L, 2L, 3L, Role.ATTENDEE);
@@ -178,33 +128,6 @@ class UserValidatorTest {
         GeneralStrategy result = userValidator.handle(nextStrategy,
                 userId, submission.getTrackId(), submission, HttpMethod.GET);
         assertEquals(result.getClass(), AttendeeStrategy.class);
-
-    }
-
-    @Test
-    void submissionIsNullTest() {
-        String email = "author@example.com";
-        when(authManager.getEmail()).thenReturn(email);
-        when(httpRequestService.get("user/byEmail/" + email, Long.class, RequestType.USER)).thenReturn(userId);
-
-        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
-                        + "&role=sub_reviewer",
-                Attendee[].class, RequestType.USER)).thenReturn(new ArrayList<Attendee>());
-        Attendee a = new Attendee(99L, 1L, 2L, 3L, Role.SUB_REVIEWER);
-        Attendee b = new Attendee(99L, 1L, 2L, 3L, Role.ATTENDEE);
-        Attendee c = new Attendee(userId, 1L, 2L, 3L, Role.ATTENDEE);
-
-        List<Attendee> attendeeList = new ArrayList<Attendee>();
-        attendeeList.add(a);
-        attendeeList.add(b);
-        attendeeList.add(c);
-        when(httpRequestService.getList("attendee/eventId=" + eventId + "&trackId=" + trackId
-                        + "&role=sub_reviewer",
-                Attendee[].class, RequestType.USER)).thenReturn(attendeeList);
-
-        IllegalAccessException e = assertThrows(IllegalAccessException.class,
-                () -> userValidator.handle(nextStrategy, userId, submission.getTrackId(), submission, HttpMethod.PUT));
-        assertEquals(e.getMessage(), "You cannot modify a submission.");
 
     }
 

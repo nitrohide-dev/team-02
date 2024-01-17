@@ -11,7 +11,8 @@ public class GeneralStrategyTest {
 
     @Test
     void testCheckDeadlineTrue() {
-        GeneralStrategy generalStrategy = new GeneralStrategy() {};
+        GeneralStrategy generalStrategy = new GeneralStrategy() {
+        };
 
         boolean result = generalStrategy.checkDeadline(777L);
 
@@ -20,7 +21,8 @@ public class GeneralStrategyTest {
 
     @Test
     void testGetSubmission() {
-        GeneralStrategy generalStrategy = new GeneralStrategy() {};
+        GeneralStrategy generalStrategy = new GeneralStrategy() {
+        };
 
         Submission submission = new Submission();
         submission.setCreated(null);
@@ -36,21 +38,23 @@ public class GeneralStrategyTest {
 
     @Test
     void testUpdateSubmission() {
-        GeneralStrategy generalStrategy = new GeneralStrategy() {};
+        GeneralStrategy generalStrategy = new GeneralStrategy() {
+        };
 
         Submission oldSubmission = new Submission();
         Submission newSubmission = new Submission();
 
-        assertDoesNotThrow(() -> generalStrategy.updateSubmission(oldSubmission, newSubmission));
+        assertThrows(IllegalAccessException.class, () -> generalStrategy.updateSubmission(oldSubmission, newSubmission));
     }
 
     @Test
     void testDeleteSubmission() {
-        GeneralStrategy generalStrategy = new GeneralStrategy() {};
+        GeneralStrategy generalStrategy = new GeneralStrategy() {
+        };
 
         Submission submission = new Submission();
 
-        assertDoesNotThrow(() -> generalStrategy.deleteSubmission(submission));
+        assertThrows(IllegalAccessException.class, () -> generalStrategy.deleteSubmission(submission));
     }
 
 }
