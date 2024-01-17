@@ -87,13 +87,13 @@ public class StatsControllerTest {
 
     @Test
     void testTrackStatistics() {
-        ResponseEntity<Statistics> stats = controller.trackStatisticsGet(1L);
+        ResponseEntity<Statistics> stats = controller.trackOrEventStatisticsGet(1L);
         assertEquals(statistics1, stats.getBody());
     }
 
     @Test
     void testEventStatistics() {
-        ResponseEntity<Statistics> stats = controller.eventStatisticsGet(2L);
+        ResponseEntity<Statistics> stats = controller.trackOrEventStatisticsGet(2L);
         assertEquals(statistics2, stats.getBody());
     }
 
@@ -101,7 +101,7 @@ public class StatsControllerTest {
     void testNotFoundExceptionTrack() throws Exception {
         when(service.getStatistics(1L)).thenThrow(NotFoundException.class);
         when(service.getStatistics(0L)).thenThrow(IllegalAccessException.class);
-        ResponseEntity<Statistics> out = controller.trackStatisticsGet(1L);
+        ResponseEntity<Statistics> out = controller.trackOrEventStatisticsGet(1L);
         assertEquals(HttpStatus.NOT_FOUND, out.getStatusCode());
     }
 
@@ -109,7 +109,7 @@ public class StatsControllerTest {
     void testIllegalAccessExceptionTrack() throws Exception {
         when(service.getStatistics(1L)).thenThrow(NotFoundException.class);
         when(service.getStatistics(0L)).thenThrow(IllegalAccessException.class);
-        ResponseEntity<Statistics> out = controller.trackStatisticsGet(0L);
+        ResponseEntity<Statistics> out = controller.trackOrEventStatisticsGet(0L);
         assertEquals(HttpStatus.UNAUTHORIZED, out.getStatusCode());
     }
 
@@ -117,7 +117,7 @@ public class StatsControllerTest {
     void testNotFoundExceptionEvent() throws Exception {
         when(service.getStatistics(1L)).thenThrow(NotFoundException.class);
         when(service.getStatistics(0L)).thenThrow(IllegalAccessException.class);
-        ResponseEntity<Statistics> out = controller.eventStatisticsGet(1L);
+        ResponseEntity<Statistics> out = controller.trackOrEventStatisticsGet(1L);
         assertEquals(HttpStatus.NOT_FOUND, out.getStatusCode());
     }
 
@@ -125,7 +125,7 @@ public class StatsControllerTest {
     void testIllegalAccessExceptionEvent() throws Exception {
         when(service.getStatistics(1L)).thenThrow(NotFoundException.class);
         when(service.getStatistics(0L)).thenThrow(IllegalAccessException.class);
-        ResponseEntity<Statistics> out = controller.eventStatisticsGet(0L);
+        ResponseEntity<Statistics> out = controller.trackOrEventStatisticsGet(0L);
         assertEquals(HttpStatus.UNAUTHORIZED, out.getStatusCode());
     }
 }

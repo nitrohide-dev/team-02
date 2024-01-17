@@ -10,7 +10,6 @@ import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import org.springframework.http.HttpMethod;
 
-import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,7 +17,6 @@ import java.util.List;
 import java.util.Random;
 
 public class SubmissionValidator extends BaseValidator {
-    private final HttpRequestService httpRequestService;
 
     public SubmissionValidator(HttpRequestService httpRequestService) {
         this.httpRequestService = httpRequestService;
@@ -35,7 +33,11 @@ public class SubmissionValidator extends BaseValidator {
      * @return strategy used
      */
     public GeneralStrategy handle(GeneralStrategy strategy, Long userId, Long trackId,
-                                  Submission submission, HttpMethod requestType) throws IOException, InterruptedException {
+                                  Submission submission, HttpMethod requestType) {
+
+        if (!requestType.equals(HttpMethod.POST)) {
+            return strategy;
+        }
 
         String paperType = checkPaperType(submission);
         if (paperType != null || submission.getTrackId() == null) {

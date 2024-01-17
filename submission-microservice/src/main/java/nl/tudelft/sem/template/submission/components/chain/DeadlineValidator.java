@@ -2,22 +2,11 @@ package nl.tudelft.sem.template.submission.components.chain;
 
 import nl.tudelft.sem.template.model.Submission;
 import nl.tudelft.sem.template.submission.components.strategy.GeneralStrategy;
-import nl.tudelft.sem.template.submission.services.HttpRequestService;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DeadlineValidator extends BaseValidator {
-    HttpRequestService httpRequestService;
-
-    /**
-     * AuthorizationValidator constructor.
-     *
-     * @param httpRequestService http request service
-     */
-    public DeadlineValidator(HttpRequestService httpRequestService) {
-        this.httpRequestService = httpRequestService;
-    }
 
     /**
      * Checks if the user is an author of the submission.

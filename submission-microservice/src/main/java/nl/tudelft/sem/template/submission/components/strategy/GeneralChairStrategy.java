@@ -1,14 +1,19 @@
 package nl.tudelft.sem.template.submission.components.strategy;
 
 import javassist.NotFoundException;
+import nl.tudelft.sem.template.model.KeywordsCounts;
 import nl.tudelft.sem.template.model.Statistics;
 import nl.tudelft.sem.template.model.Track;
 import nl.tudelft.sem.template.submission.models.RequestType;
 import nl.tudelft.sem.template.submission.repositories.StatisticsRepository;
 import nl.tudelft.sem.template.submission.services.HttpRequestService;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class GeneralChairStrategy implements GeneralStrategy {
     private final StatisticsRepository statisticsRepository;
@@ -40,6 +45,31 @@ public class GeneralChairStrategy implements GeneralStrategy {
         );
     }
 
+    private KeywordsCounts mergeKeywordsCounts(KeywordsCounts keywordsCounts1,
+                                               KeywordsCounts keywordsCounts2) {
+        if (keywordsCounts1.getCounts() == null) {
+            keywordsCounts1.setCounts(new ArrayList<>());
+            keywordsCounts1.setKeywords(new ArrayList<>());
+        }
+        Map<String, Long> counts = IntStream.range(0, keywordsCounts1.getKeywords().size())
+                .boxed()
+                .collect(Collectors.toMap(keywordsCounts1.getKeywords()::get, keywordsCounts1.getCounts()::get));
+
+        List<String> keywords = keywordsCounts2.getKeywords();
+        for (int i = 0; i < keywords.size(); i++) {
+            String keyword = keywords.get(i);
+            if (!counts.containsKey(keyword)) {
+                counts.put(keyword, 0L);
+            }
+            counts.put(keyword, counts.getOrDefault(keyword, 0L) + keywordsCounts2.getCounts().get(i));
+        }
+
+        KeywordsCounts keywordsCounts = new KeywordsCounts();
+        keywordsCounts.setCounts(new ArrayList<>(counts.values()));
+        keywordsCounts.setKeywords(new ArrayList<>(counts.keySet()));
+        return keywordsCounts;
+    }
+
     /**
      * Returns statistics for a given event.
      *
@@ -62,6 +92,7 @@ public class GeneralChairStrategy implements GeneralStrategy {
         List<Statistics> trackStatistics = statisticsRepository.findAllById(Arrays.asList(tracksIds));
 
         Statistics statistics = new Statistics();
+        statistics.setKeywordsCounts(new KeywordsCounts());
         long totalAuthors = 0L;
         for (Statistics stats : trackStatistics) {
             statistics.setTotalSubmissions(statistics.getTotalSubmissions() + stats.getTotalSubmissions());
@@ -70,6 +101,8 @@ public class GeneralChairStrategy implements GeneralStrategy {
             statistics.setRejected(statistics.getRejected() + stats.getRejected());
             statistics.setUnderReview(statistics.getUnderReview() + stats.getUnderReview());
             totalAuthors += stats.getAverageNumberOfAuthors() * stats.getTotalSubmissions();
+            statistics.setKeywordsCounts(mergeKeywordsCounts(statistics.getKeywordsCounts(),
+                    stats.getKeywordsCounts()));
         }
 
         statistics.setAverageNumberOfAuthors(totalAuthors / statistics.getTotalSubmissions());

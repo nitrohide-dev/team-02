@@ -1,4 +1,4 @@
-package nl.tudelft.sem.template.submission.unit.services.functional;
+package nl.tudelft.sem.template.submission.functional;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.*;
 @SpringBootTest(classes = HttpRequestService.class)
 @ExtendWith(MockitoExtension.class)
 @ContextConfiguration(classes = {JwtTokenVerifier.class})
-public class SubmissionServiceTest {
+public class SubmissionTest {
     private static WireMockServer wireMockServerAuth;
     private static WireMockServer wireMockServerUser;
     private static WireMockServer wireMockServerReview;
@@ -95,6 +95,7 @@ public class SubmissionServiceTest {
         );
 
         submission = new Submission();
+        submission.setId(1L);
         submission.setEventId(1L);
         submission.setTrackId(0L);
         submission.setTitle("title");
@@ -124,7 +125,7 @@ public class SubmissionServiceTest {
         );
 
         wireMockServerUser.stubFor(
-                WireMock.get("/attendee/0")
+                WireMock.get("/attendee/trackId=0")
                         .willReturn(aResponse()
                                 .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
                                 .withBody("[]")
@@ -241,45 +242,43 @@ public class SubmissionServiceTest {
         when(submissionRepository.findById(submission.getId())).thenReturn(Optional.of(submission));
         Submission updated = new Submission();
         updated.setStatus(SubmissionStatus.REJECTED);
-
         Exception e = assertThrows(DeadlinePassedException.class, () -> {
             submissionService.update(submission.getId(), updated);
         });
         assertEquals("You cannot modify submission after the deadline.", e.getMessage());
     }
 
-    //    @Test
-    //    void testGetSubmissionAfterReviewDeadline() throws Exception {
-    //        commonAuthorSetup();
-    //        wireMockServerUser.stubFor(
-    //                WireMock.get("/track/0")
-    //                        .willReturn(aResponse()
-    //                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
-    //                                .withBody("{\"id\":\"0\",\"event_id\":\"1\",\"submit_deadline\":
-    //                                \"2023-09-10T23:59:59\","
-    //                                        + "\"paper_type\":\"full-paper\",\"title\":\"\",\"description\":\"\","
-    //                                        + "\"review_deadline\":\"2023-08-10T23:59:59\"}")
-    //                        )
-    //        );
-    //
-    //        wireMockServerReview.stubFor(
-    //                WireMock.get("/comments/1/papers/1")
-    //                        .willReturn(aResponse()
-    //                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
-    //                                .withBody("{\"commentID\":\"0\",\"userID\":\"1\",\"reviewID\":\"2\","
-    //                                        + "\"description\":\"description\",\"isConfidential\":\"true\"}")
-    //                        )
-    //        );
-    //
-    //        submission.setId(1L);
-    //        submission.setStatus(SubmissionStatus.UNDERREVIEW);
-    //        submission.setType(PaperType.FULL_PAPER);
-    //
-    //        when(submissionRepository.findById(1L)).thenReturn(Optional.of(submission));
-    //
-    //        Submission result = submissionService.getById(1L).getBody();
-    //        assertEquals(1, result.getComments().size());
-    //    }
+    @Test
+    void testGetSubmissionAfterReviewDeadline() throws Exception {
+        commonAuthorSetup();
+        wireMockServerUser.stubFor(
+                WireMock.get("/track/0")
+                        .willReturn(aResponse()
+                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                .withBody("{\"id\":\"0\",\"event_id\":\"1\",\"submit_deadline\":\"2023-09-10T23:59:59\","
+                                        + "\"paper_type\":\"full-paper\",\"title\":\"\",\"description\":\"\","
+                                        + "\"review_deadline\":\"2023-08-10T23:59:59\"}")
+                        )
+        );
+
+        wireMockServerReview.stubFor(
+                WireMock.get("/comments/1/papers/1")
+                        .willReturn(aResponse()
+                                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                .withBody("[{\"commentID\":\"0\",\"userID\":\"1\",\"reviewID\":\"2\","
+                                        + "\"description\":\"description\",\"isConfidential\":\"true\"}]")
+                        )
+        );
+
+        submission.setId(1L);
+        submission.setAuthors(List.of(0L, 1L));
+        submission.setStatus(SubmissionStatus.UNDERREVIEW);
+        submission.setType(PaperType.FULL_PAPER);
+
+        when(submissionRepository.findById(1L)).thenReturn(Optional.of(submission));
+        Submission result = submissionService.getById(1L).getBody();
+        assertEquals(1, result.getComments().size());
+    }
 
 }
 
