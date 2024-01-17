@@ -18,13 +18,10 @@ import java.util.List;
 public class UserValidator extends BaseValidator {
     SubmissionRepository submissionRepository;
     StatisticsRepository statisticsRepository;
-    HttpRequestService httpRequestService;
     AuthManager authManager;
 
     /**
      * AuthorizationValidator constructor.
-     *
-     * @param httpRequestService http request service
      */
     public UserValidator(SubmissionRepository submissionRepository,
                          StatisticsRepository statisticsRepository,
@@ -56,7 +53,8 @@ public class UserValidator extends BaseValidator {
             }
         } else {
 
-            List<Attendee> chairsList = httpRequestService.getList("attendee/" + trackId, Attendee[].class,
+            List<Attendee> chairsList = httpRequestService.getList("attendee/trackId="
+                            + trackId, Attendee[].class,
                     RequestType.USER);
             for (Attendee c : chairsList) {
                 if (c.getUserId() == userId && c.getRole().equals(Role.GENERAL_CHAIR)) {

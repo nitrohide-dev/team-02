@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Random;
 
 public class SubmissionValidator extends BaseValidator {
-    private final HttpRequestService httpRequestService;
 
     public SubmissionValidator(HttpRequestService httpRequestService) {
         this.httpRequestService = httpRequestService;

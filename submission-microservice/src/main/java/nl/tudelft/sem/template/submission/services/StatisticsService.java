@@ -44,8 +44,8 @@ public class StatisticsService {
     }
 
     private void setupChain() {
-        handler = new UserValidator(submissionRepository, statisticsRepository,
-                requestService, authManager);
+        handler = new UserValidator(submissionRepository, statisticsRepository, requestService,
+                authManager);
     }
 
     /**
@@ -143,7 +143,7 @@ public class StatisticsService {
 
         long n = statistics.getTotalSubmissions();
         statistics.setAverageNumberOfAuthors((statistics.getAverageNumberOfAuthors()
-                * n + submission.getAuthors().size()) / (n + 1));
+                * (n - 1) + submission.getAuthors().size()) / n);
 
         updateKeywordsCounts(statistics, submission.getKeywords(), 1L);
         statisticsRepository.save(statistics);
@@ -160,9 +160,9 @@ public class StatisticsService {
 
         long n = statistics.getTotalSubmissions();
         statistics.setAverageNumberOfAuthors((statistics.getAverageNumberOfAuthors()
-                * n - submission.getAuthors().size()) / (n - 1));
+                * (n + 1) - submission.getAuthors().size()) / n);
         updateKeywordsCounts(statistics, submission.getKeywords(), -1L);
-        statisticsRepository.delete(statistics);
+        statisticsRepository.save(statistics);
     }
 
     /**

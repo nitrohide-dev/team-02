@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public abstract class BaseValidator implements Validator {
     private Validator next;
-    private HttpRequestService httpRequestService;
+    protected HttpRequestService httpRequestService;
 
     public void setNext(Validator h) {
         this.next = h;

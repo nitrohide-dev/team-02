@@ -1,4 +1,4 @@
-package nl.tudelft.sem.template.submission.unit.services.unit;
+package nl.tudelft.sem.template.submission.unit.services;
 
 import javassist.NotFoundException;
 import nl.tudelft.sem.template.model.PaperType;

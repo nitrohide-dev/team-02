@@ -254,30 +254,11 @@ paths:
         - api_key: [ ]
       tags:
         - statistics
-  /stats/event/{eventId}:
+  /stats/trackOrEvent/{trackId}:
     get:
-      description: Get statistics of this event
-      operationId: eventStatisticsGet
-      security:
-        - api_key: [ ]
-      tags:
-        - statistics
-      parameters:
-        - $ref: '#/components/parameters/EventId'
-      responses:
-        '200':
-          description: Statistics OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Statistics"
-        '400':
-          description: Event not found
-
-  /stats/track/{trackId}:
-    get:
-      description: Get statistics of this track
-      operationId: trackStatisticsGet
+      description: "Get statistics of this track if user is a pc chair of this track.
+      If user is a general chair, statistics for entire event is returned."
+      operationId: trackOrEventStatisticsGet
       security:
         - api_key: [ ]
       tags:
@@ -292,7 +273,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Statistics"
         '400':
-          description: Track not found
+          description: Event not found
 
 components:
   parameters:
@@ -309,15 +290,6 @@ components:
       in: path
       required: true
       description: Id of the track
-      schema:
-        type: integer
-        format: int64
-      example: 1
-    EventId:
-      name: eventId
-      in: path
-      required: true
-      description: Id of the event
       schema:
         type: integer
         format: int64

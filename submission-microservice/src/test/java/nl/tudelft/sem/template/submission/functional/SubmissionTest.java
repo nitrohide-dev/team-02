@@ -1,4 +1,4 @@
-package nl.tudelft.sem.template.submission.unit.services.functional;
+package nl.tudelft.sem.template.submission.functional;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.*;
 @SpringBootTest(classes = HttpRequestService.class)
 @ExtendWith(MockitoExtension.class)
 @ContextConfiguration(classes = {JwtTokenVerifier.class})
-public class SubmissionServiceTest {
+public class SubmissionTest {
     private static WireMockServer wireMockServerAuth;
     private static WireMockServer wireMockServerUser;
     private static WireMockServer wireMockServerReview;
@@ -125,7 +125,7 @@ public class SubmissionServiceTest {
         );
 
         wireMockServerUser.stubFor(
-                WireMock.get("/attendee/0")
+                WireMock.get("/attendee/trackId=0")
                         .willReturn(aResponse()
                                 .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
                                 .withBody("[]")
